@@ -38,7 +38,7 @@ function ObtainIPInfo() {
 		&& return 1
 
 	INPUTADDRESS=( "${INPUTADDRESS%/*}" "${INPUTADDRESS#*/}" )
-	RAWADDRESS=$(( 0xffffffff ^ ((1 << (32 - ${INPUTADDRESS[1]})) - 1) ))
+	RAWADDRESS=$(( 0xffffffff ^ ((1 << (32 - INPUTADDRESS[1])) - 1) ))
 	IFS=. read -r IP1 IP2 IP3 IP4 <<< "${INPUTADDRESS[0]}"
 	IFS=. read -r MASK1 MASK2 MASK3 MASK4 <<< "$(( (RAWADDRESS >> 24) & 0xff )).$(( (RAWADDRESS >> 16) & 0xff )).$(( (RAWADDRESS >> 8) & 0xff )).$(( RAWADDRESS & 0xff ))"
 
@@ -51,7 +51,7 @@ function ObtainIPInfo() {
 }
 
 ####################################################################################################
-# MAIN 
+# MAIN
 ####################################################################################################
 # 1/IDENTITYDIRECTORY, 2/RESOLUTIONRANGE, 3/UPSTREAMRESOLVER, 4/LOGLEVEL, 5/JWTSTRING, 6/IDENTITYOUT
 IDENTITYDIRECTORY="${1:-/share/NetFoundry/identities}"
@@ -62,6 +62,12 @@ ENROLLMENTJWT="${5}"
 ENROLLSTRING="enroll -j <(echo \"${5}\") -i \"${1}/${6}\""
 RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
 
+bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
+# Check identities folder for validity and list available identities.
+if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp "${IDENTITYDIRECTORY}"; then
+	bashio::log.error "ID LISTING ERROR"
+	bashio::exit.nok "ZITI EDGE TUNNEL - PROGRAM END"
+fi
 # Perform enrollment should a JWT be available.
 if [[ ${ENROLLMENTJWT} != "UNSET" ]]; then
 	bashio::log.notice "ZITI EDGE TUNNEL - ENROLL BEGIN"
@@ -73,14 +79,7 @@ if [[ ${ENROLLMENTJWT} != "UNSET" ]]; then
 	sleep 5
 	bashio::log.notice "ZITI EDGE TUNNEL - ENROLL END"
 fi
-
-bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
-# Check identities folder for validity and list available identities.
-if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp ${IDENTITYDIRECTORY}; then
-	bashio::log.error "ID LISTING ERROR" 
-	bashio::exit.nok "ZITI EDGE TUNNEL - PROGRAM END"
-fi
-bashio::log.info "IDENTITIES: [$(ls -1 ${IDENTITYDIRECTORY})]"
+bashio::log.info "IDENTITIES: [$(ls -1 "${IDENTITYDIRECTORY}")]"
 
 # DNS upstream assignment.
 UPSTREAMRESOLVER="${3}"
@@ -102,7 +101,7 @@ done < /etc/resolv.conf >> /etc/resolv.conf.ziti
 cat /etc/resolv.conf.ziti > /etc/resolv.conf
 
 # Set the system first resolver to ZITI.
-if ha dns options --servers dns://${NSERV} &>/dev/null; then
+if ha dns options --servers dns://"${NSERV}" &>/dev/null; then
 	bashio::log.info "Setup of system resolver via REST to [${NSERV}] succeeded."
 else
 	bashio::log.warning "Setup of system resolver via REST to [${NSERV}] failed."
