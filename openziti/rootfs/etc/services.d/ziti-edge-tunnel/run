@@ -3,9 +3,6 @@
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="run"
 MyPurpose="NetFoundry ZITI Edge Tunnel Runtime Script for Home Assistant."
-MyWarranty="This program comes without any warranty, implied or otherwise."
-MyLicense="This program has no license."
-MyVersion="1.0"
 ####################################################################################################
 IdentityDirectory="$(bashio::config 'IdentityDirectory')"
 [[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] \

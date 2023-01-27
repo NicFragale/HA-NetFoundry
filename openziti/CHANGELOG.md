@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- Cleanup of some license information.
+- Change the checking cycle to reduce logging.
+
 ## 1.0.1
 
 - Fixed a bug in the enrollment method.

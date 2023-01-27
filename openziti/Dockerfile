@@ -6,7 +6,7 @@ LABEL \
 	io.hass.name="NetFoundry OpenZITI" \
 	io.hass.description="Zero Trust Application Specific Networking" \
 	io.hass.type="addon" \
-	io.hass.version="1.0.1" \
+	io.hass.version="1.0.2" \
 	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
 
 # Update the system and download required software.

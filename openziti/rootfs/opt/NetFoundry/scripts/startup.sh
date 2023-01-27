@@ -3,9 +3,6 @@
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="startup.sh"
 MyPurpose="NetFoundry ZITI Edge Tunnel Startup Script for Home Assistant."
-MyWarranty="This program comes without any warranty, implied or otherwise."
-MyLicense="This program has no license."
-MyVersion="1.0"
 ####################################################################################################
 set -e -u -o pipefail
 
@@ -19,7 +16,7 @@ function CheckWait() {
 	while true; do
 		if [[ -d /proc/${TARGETPID} ]]; then
 			bashio::log.info "ZITI EDGE TUNNEL - [$((++ITR))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
-			sleep 5
+			sleep 300
 		else
 			bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
 			break

@@ -3,8 +3,5 @@
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="finish"
 MyPurpose="NetFoundry ZITI Edge Tunnel Shutdown Script for Home Assistant."
-MyWarranty="This program comes without any warranty, implied or otherwise."
-MyLicense="This program has no license."
-MyVersion="1.0"
 ####################################################################################################
 bashio::log.notice "Stopped NetFoundry ZITI..."
