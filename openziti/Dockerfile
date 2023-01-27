@@ -4,7 +4,7 @@ ARG BUILD_ARCH
 
 LABEL \
 	io.hass.name="NetFoundry OpenZITI" \
-	io.hass.description="NetFoundry OpenZITI - Zero Trust Application Specific Networking" \
+	io.hass.description="Zero Trust Application Specific Networking" \
 	io.hass.type="addon" \
 	io.hass.version="1.0.0" \
 	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
@@ -21,7 +21,7 @@ RUN set -x \
 	&& ZTVERSION="$(\
 		curl -Ls \
 			'https://api.github.com/repos/openziti/ziti-tunnel-sdk-c/releases' \
-		| jq -r '
+		| jq -r '\
 			.[].name \
 			| sub("v";"")' \
 		| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
