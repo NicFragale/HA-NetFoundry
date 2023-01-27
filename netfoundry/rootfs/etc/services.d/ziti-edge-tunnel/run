@@ -1,0 +1,45 @@
+#!/usr/bin/with-contenv bashio
+####################################################################################################
+# 20230119 - Written by Nic Fragale @ NetFoundry.
+MyName="run"
+MyPurpose="NetFoundry ZITI Edge Tunnel Runtime Script for Home Assistant."
+MyWarranty="This program comes without any warranty, implied or otherwise."
+MyLicense="This program has no license."
+MyVersion="1.0"
+####################################################################################################
+IdentityDirectory="$(bashio::config 'IdentityDirectory')"
+[[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] \
+        && IdentityDirectory="/share/NetFoundry/identities"
+
+ResolutionRange="$(bashio::config 'ResolutionRange')"
+[[ ${ResolutionRange:=DEFAULT} == "DEFAULT" ]] \
+        && ResolutionRange="100.64.64.0/18"
+
+UpstreamResolver="$(bashio::config 'UpstreamResolver')"
+[[ ${UpstreamResolver:=DEFAULT} == "DEFAULT" ]] \
+        && UpstreamResolver="$(ha dns info --raw-json 2>/dev/null | jq -r '.data.locals[] | sub("dns://";"")')"
+[[ -z ${UpstreamResolver} ]] \
+        && UpstreamResolver="1.1.1.1"
+
+LogLevel="$(bashio::config 'LogLevel')"
+[[ ${LogLevel:=DEFAULT} == "DEFAULT" ]] \
+        && LogLevel="3"
+
+EnrollmentJWT="$(bashio::config 'EnrollmentJWT')"
+[[ ${EnrollmentJWT:=UNSET} == "UNSET" ]] \
+        && EnrollmentJWT="UNSET"
+
+bashio::log.notice "Starting NetFoundry ZITI..."
+if [[ ${SUPERVISOR_TOKEN:=UNKNOWN} == "UNKNOWN" ]]; then
+        bashio::log.warning "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN}\"."
+else
+        bashio::log.info "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN:0:10}...\"."
+fi
+bashio::log.info "  with IdentityDirectory \"${IdentityDirectory}\"."
+bashio::log.info "  with ResolutionRange   \"${ResolutionRange}\"."
+bashio::log.info "  with UpstreamResolver  \"${UpstreamResolver}\"."
+bashio::log.info "  with LogLevel          \"${LogLevel}\"."
+[[ ${EnrollmentJWT} != "UNSET" ]] \
+	&& bashio::log.info "  with EnrollmentJWT     \"${EnrollmentJWT:0:10}...${EnrollmentJWT:0-10}\"."
+
+exec /opt/NetFoundry/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" "ZTID-$(date +"%Y%m%d_%H%M%S").json" < /dev/null

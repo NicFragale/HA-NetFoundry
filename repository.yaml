@@ -1,4 +1,3 @@
-# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
-name: Example Home Assistant add-on repository
-url: 'https://github.com/home-assistant/addons-example'
-maintainer: Awesome Maintainer <awesome@example.com>
+name: Home Assistant Add-on Repository for NetFoundry OpenZITI
+url: 'https://github.com/NicFragale/HA-NetFoundry'
+maintainer: Awesome Maintainer <nic.fragale@netfoundry.io>
