@@ -4,10 +4,7 @@ configuration:
     name: Enrollment JWT
     description: >-
       [OPTIONAL]
-      The JWT (Java Web Token) is the output, in plain ASCII text, of the ZITI Controller when creating a new identity (endpoint).
-      To pair this entity with a ZITI controller, create the identity, copy the JWT text from the output file, and paste it exactly into this field.
-      Once successfully registered after the application is started (Check Logs), you may remove the JWT text from the field.
-      You may register more than one identity (once per application startup) if desired, however, at least one identity is required to run.
+      The ASCII text output of the OpenZITI controller upon endpoint creation.  Place the text exactly from the file into this field.
       If not present, will not attempt any enrollment proceedures during startup.
   IdentityDirectory:
     name: Identity Directory
