@@ -1,6 +1,6 @@
 name: "NetFoundry OpenZITI"
 description: "Zero Trust Application Specific Networking"
-version: "1.0.0"
+version: "1.0.1"
 slug: "openziti"
 url: "https://github.com/openziti"
 startup: services
