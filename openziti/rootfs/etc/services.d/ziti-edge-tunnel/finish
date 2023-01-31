@@ -4,4 +4,8 @@
 MyName="finish"
 MyPurpose="NetFoundry ZITI Edge Tunnel Shutdown Script for Home Assistant."
 ####################################################################################################
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] \
+    && bashio::log.info "MyName: ${MyName}" \
+    && bashio::log.info "MyPurpose: ${MyPurpose}"
+
 bashio::log.notice "Stopped NetFoundry ZITI..."

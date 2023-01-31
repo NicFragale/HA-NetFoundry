@@ -4,6 +4,10 @@
 MyName="run"
 MyPurpose="NetFoundry ZITI Edge Tunnel Runtime Script for Home Assistant."
 ####################################################################################################
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] \
+    && bashio::log.info "MyName: ${MyName}" \
+    && bashio::log.info "MyPurpose: ${MyPurpose}"
+
 IdentityDirectory="$(bashio::config 'IdentityDirectory')"
 [[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] \
         && IdentityDirectory="/share/NetFoundry/identities"
@@ -27,11 +31,10 @@ EnrollmentJWT="$(bashio::config 'EnrollmentJWT')"
         && EnrollmentJWT="UNSET"
 
 bashio::log.notice "Starting NetFoundry ZITI..."
-if [[ ${SUPERVISOR_TOKEN:=UNKNOWN} == "UNKNOWN" ]]; then
-        bashio::log.warning "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN}\"."
-else
-        bashio::log.info "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN:0:10}...\"."
-fi
+[[ ${SUPERVISOR_TOKEN:=NULL} == "NULL" ]] \
+        && SUPERVISOR_TOKEN="null"
+
+bashio::log.info "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN:0:10}...\"."
 bashio::log.info "  with IdentityDirectory \"${IdentityDirectory}\"."
 bashio::log.info "  with ResolutionRange   \"${ResolutionRange}\"."
 bashio::log.info "  with UpstreamResolver  \"${UpstreamResolver}\"."

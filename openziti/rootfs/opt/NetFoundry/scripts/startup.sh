@@ -15,10 +15,12 @@ function CheckWait() {
 	local ITR=0
 	while true; do
 		if [[ -d /proc/${TARGETPID} ]]; then
-			bashio::log.info "ZITI EDGE TUNNEL - [$((++ITR))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
-			sleep 300
+			# Trigger a log entry only every 5m.
+			[[ $((++ITR%60)) -eq 0 ]] \
+				&& bashio::log.info "ZITI EDGE TUNNEL - [$((ITR/60))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
+			sleep 5
 		else
-			bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
+			bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR/60))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
 			break
 		fi
 	done
@@ -59,6 +61,10 @@ ENROLLMENTJWT="${5}"
 ENROLLSTRING="enroll -j <(echo \"${5}\") -i \"${1}/${6}\""
 RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
 
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] \
+    && bashio::log.info "MyName: ${MyName}" \
+    && bashio::log.info "MyPurpose: ${MyPurpose}"
+
 bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
 # Check identities folder for validity and list available identities.
 if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp "${IDENTITYDIRECTORY}"; then
@@ -82,7 +88,7 @@ bashio::log.info "IDENTITIES: [$(ls -1 "${IDENTITYDIRECTORY}")]"
 UPSTREAMRESOLVER="${3}"
 
 # Ensure existing configuration is saved for reinstallation later.
-bashio::log.info "ZITI_DNS_IP=[${ZITIDNSIP:=$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")}]"
+bashio::log.info "ZITI_DNS_IP: ${ZITIDNSIP:=$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")}"
 cat /etc/resolv.conf > /etc/resolv.conf.system
 echo > /etc/resolv.conf.ziti
 NSSEMA="FALSE"

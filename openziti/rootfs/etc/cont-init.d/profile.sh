@@ -6,6 +6,10 @@ MyPurpose="NetFoundry ZITI Edge Tunnel Profile Loading Script for Home Assistant
 ####################################################################################################
 readonly DIRECTORIES=(share)
 
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] \
+    && bashio::log.info "MyName: ${MyName}" \
+    && bashio::log.info "MyPurpose: ${MyPurpose}"
+
 # Make Home Assistant TOKEN available on the CLI.
 mkdir -p /etc/profile.d
 bashio::var.json \

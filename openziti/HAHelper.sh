@@ -2,9 +2,6 @@
 ###################################################################################################################
 # HAHelper - A helper utility that adds functions and variables to the HA shell.
 # 20220517 Written by Nic Fragale.
-MyWarranty='This program comes without any warranty, implied or otherwise.'
-MyLicense='This program has no license.'
-MyVersion='1.0'
 ###################################################################################################################
 
 #######################################################################################
