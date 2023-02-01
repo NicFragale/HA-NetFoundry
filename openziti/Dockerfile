@@ -20,11 +20,8 @@ RUN set -x \
 	&& mkdir -vp /opt/NetFoundry/build \
 	&& cd /opt/NetFoundry/build \
 	&& ZTVERSION="$(\
-		curl -Ls \
-			'https://api.github.com/repos/openziti/ziti-tunnel-sdk-c/releases' \
-		| jq -r '\
-			.[].name \
-			| sub("v";"")' \
+		curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
+		| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for (EACHVERSION in ALLVERSIONS) {print EACHVERSION}}' \
 		| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
 		| head -n1)" \
 	&& curl -Lso "v${ZTVERSION}.zip" \
