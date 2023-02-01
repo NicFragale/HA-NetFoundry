@@ -18,7 +18,6 @@ arch:
   - i386
 hassio_api: true
 hassio_role: manager
-auth_api: true
 host_dbus: true
 host_network: true
 network_mode: host
