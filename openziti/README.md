@@ -24,8 +24,6 @@ Follow these steps to get the add-on installed on your system:
 2. Find the "NetFoundry OpenZITI" add-on and click it.
 3. Click on the "INSTALL" button.
 
-PLEASE NOTE: The installation currently includes the build process and can take around 5 minutes to complete (on RPi). During this time it may seem like the addon is not installing. Do not navigate away from the installation in the UI.
-
 ## How to Use
 
 Regardless of which system controls the endpoint (CloudZITI or OpenZITI) the endpoint must be registered as a valid identity. If you wish to try out the FREE TEAMS EDITION of CloudZITI, sign up at [CloudZITI](https://nfconsole.io/signup).
