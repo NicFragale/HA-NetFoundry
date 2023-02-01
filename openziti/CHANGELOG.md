@@ -6,7 +6,7 @@
 
 ## 1.0.4
 
-- Now utilized a prebuilt container via DockerHub for speed to install.
+- Now utilizing a prebuilt container via DockerHub for speed to install.
 - Minor bug fixes.
 
 ## 1.0.3
