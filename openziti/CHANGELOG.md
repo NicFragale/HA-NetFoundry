@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- Major update to utilize CAS notary.
+
 ## 1.0.4
 
 - Now utilized a prebuilt container via DockerHub for speed to install.
