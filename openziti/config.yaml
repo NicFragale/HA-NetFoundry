@@ -16,12 +16,12 @@ arch:
   - armhf
   - armv7
   - i386
-#hassio_api: true
-#hassio_role: manager
-#host_dbus: true
+hassio_api: true
+hassio_role: manager
+host_dbus: true
 host_network: true
 network_mode: host
-#host_ipc: true
+host_ipc: true
 map:
   - share:rw
 privileged:
