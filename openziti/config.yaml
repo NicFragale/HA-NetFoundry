@@ -3,9 +3,9 @@ description: "Zero Trust Application Specific Networking"
 version: "1.1.0"
 slug: "openziti"
 # To build locally on your platform, comment the following out.
-image: "nfragale/openziti-{arch}"
+#image: "nfragale/openziti-{arch}"
 url: "https://github.com/openziti"
-codenotary: nic.fragale+cas@gmail.com
+#codenotary: nic.fragale+cas@gmail.com
 startup: services
 init: false
 panel_icon: mdi:lightning-bolt-circle
