@@ -18,7 +18,7 @@ ResolutionRange="$(bashio::config 'ResolutionRange')"
 
 UpstreamResolver="$(bashio::config 'UpstreamResolver')"
 [[ ${UpstreamResolver:=DEFAULT} == "DEFAULT" ]] \
-        && UpstreamResolver="$(ha dns info --raw-json 2>/dev/null | jq -r '.data.locals[] | sub("dns://";"")')"
+        && UpstreamResolver="$(ha dns info --raw-json 2>/dev/null | jq -r '[.data.locals[]][0] | sub("dns://";"")')"
 [[ -z ${UpstreamResolver} ]] \
         && UpstreamResolver="1.1.1.1"
 
