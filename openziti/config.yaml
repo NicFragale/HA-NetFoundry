@@ -5,7 +5,7 @@ slug: "openziti"
 # To build locally on your platform, comment the following out.
 image: "nfragale/openziti-{arch}"
 url: "https://github.com/openziti"
-codenotary: "bmljZnJhZ2FsZStjYXNAZ21haWwuY29t"
+codenotary: "nicfragale+cas@gmail.com"
 startup: services
 init: false
 panel_icon: mdi:lightning-bolt-circle
