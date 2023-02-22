@@ -10,6 +10,9 @@ startup: services
 init: false
 panel_icon: mdi:lightning-bolt-circle
 panel_title: NetFoundry OpenZITI
+ingress: true
+ingress_port: 0
+ingress_stream: true
 arch:
   - aarch64
   - amd64
