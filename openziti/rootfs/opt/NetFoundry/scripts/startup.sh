@@ -121,4 +121,12 @@ bashio::log.notice "ZITI EDGE TUNNEL - PROGRAM BEGIN"
 ZETPID=$!
 CheckWait "MAIN LOOP" "${ZETPID}" &
 wait $!
+
+# Set the system resolver back to initial state.
+if ha dns options --servers dns://"${UPSTREAMRESOLVER}" &>/dev/null; then
+	bashio::log.info "Setup of system resolver via REST to [${UPSTREAMRESOLVER}] succeeded."
+else
+	bashio::log.warning "Setup of system resolver via REST to [${UPSTREAMRESOLVER}] failed."
+fi
+
 bashio::log.notice "ZITI EDGE TUNNEL - PROGRAM END"
