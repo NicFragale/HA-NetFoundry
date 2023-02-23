@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- Fixes an error in signing with CAS.
+- Adds a graceful release of the original DNS upstream of the system upon shutdown.
+- Some minor bug fixes.
+
 ## 1.1.0
 
 - Major update to utilize CAS notary.
