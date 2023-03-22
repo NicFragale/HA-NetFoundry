@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Updates the ZITI EDGE TUNNEL (v0.21.0) utilizing ZITI C SDK (v0.31.5).
+
 ## 1.1.1
 
 - Fixes an error in signing with CAS.
