@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Minor bug fixes.
+
 ## 1.1.2
 
 - Updates the ZITI EDGE TUNNEL (v0.21.0) utilizing ZITI C SDK (v0.31.5).

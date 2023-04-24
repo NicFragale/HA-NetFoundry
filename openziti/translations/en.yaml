@@ -4,8 +4,8 @@ configuration:
     name: Enrollment JWT
     description: >-
       [OPTIONAL]
-      The ASCII text output of the OpenZITI controller upon endpoint creation.  Place the text exactly from the file into this field.
-      If not present, will not attempt any enrollment proceedures during startup.
+      The ASCII text output of the OpenZITI controller, file extension (.jwt) upon endpoint creation.  Place the text exactly from the file into this field.
+      If not present (UNSET), will not attempt any enrollment proceedures during startup.
   IdentityDirectory:
     name: Identity Directory
     description: >-

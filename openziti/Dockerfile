@@ -1,14 +1,23 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
-ARG BUILD_ARCH
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:13.2.2
+FROM ${BUILD_FROM}
 
 LABEL \
-	io.hass.name="NetFoundry OpenZITI" \
-	io.hass.description="Zero Trust Application Specific Networking" \
+	io.hass.name="${BUILD_NAME}" \
+	io.hass.description="${BUILD_DESCRIPTION}" \
+	io.hass.arch="${BUILD_ARCH}" \
 	io.hass.type="addon" \
-	io.hass.version="1.1.2" \
-	io.hass.arch="armhf|aarch64|i386|amd64" \
-	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
+	io.hass.version=${BUILD_VERSION} \
+	org.opencontainers.image.title="${BUILD_NAME}" \
+	org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
+	org.opencontainers.image.vendor="Home Assistant Community Add-ons" \
+	maintainer="Nic Fragale <nic.fragale@netfoundry.io>" \
+	org.opencontainers.image.licenses="APACHE2.0" \
+	org.opencontainers.image.url="https://addons.community" \
+	org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
+	org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
+	org.opencontainers.image.created=${BUILD_DATE} \
+	org.opencontainers.image.revision=${BUILD_REF} \
+	org.opencontainers.image.version=${BUILD_VERSION}
 
 # Update the system and download required software.
 RUN set -x \
@@ -20,12 +29,12 @@ RUN set -x \
 	&& mkdir -vp /opt/NetFoundry/build \
 	&& cd /opt/NetFoundry/build \
 	&& ZTVERSION="$(\
-		curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
-		| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
-		| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
-		| head -n1)" \
+	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
+	| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
+	| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
+	| head -n1)" \
 	&& curl -Lso "v${ZTVERSION}.zip" \
-		"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
+	"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
 	&& unzip v${ZTVERSION}.zip \
 	&& cd ziti-tunnel-sdk-c-${ZTVERSION} \
 	&& cmake -DGIT_VERSION=${ZTVERSION} -DUSE_OPENSSL=on -DHAVE_LIBUV=on -DHAVE_LIBSODIUM=on -DDISABLE_LIBSYSTEMD_FEATURE=ON -B../ \
@@ -42,11 +51,11 @@ RUN set -x \
 # Add the Home Assistant CLI.
 RUN set -x \
 	&& curl -Lso "/usr/bin/ha" \
-        	"https://github.com/home-assistant/cli/releases/download/$(\
-			curl -LsH 'Accept: application/json' \
-				'https://github.com/home-assistant/cli/releases/latest' \
-			| jq -r '.tag_name' \
-		)/ha_${BUILD_ARCH}" \
+	"https://github.com/home-assistant/cli/releases/download/$(\
+	curl -LsH 'Accept: application/json' \
+	'https://github.com/home-assistant/cli/releases/latest' \
+	| jq -r '.tag_name' \
+	)/ha_${BUILD_ARCH}" \
 	&& chmod a+x "/usr/bin/ha"
 
 # All work has been done.
