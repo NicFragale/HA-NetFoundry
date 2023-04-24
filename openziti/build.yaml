@@ -1,7 +1,5 @@
 build_from:
-  aarch64: "arm64v8/ubuntu:"
-  armv7: "arm32v7/ubuntu:"
-  amd64: "ubuntu:"
+  amd64: "alpine:"
 codenotary:
   signer: "nicfragale+cas@gmail.com"
   base_image: "notary@home-assistant.io"
