@@ -5,7 +5,7 @@ FROM $BUILD_FROM
 LABEL \
 	io.hass.name="${BUILD_NAME}" \
 	io.hass.description="${BUILD_DESCRIPTION}" \
-	io.hass.arch="${BUILD_ARCH}" \
+	io.hass.arch="armhf|aarch64|i386|amd64" \
 	io.hass.type="addon" \
 	io.hass.version=${BUILD_VERSION} \
 	io.hass.image.licenses="APACHE2.0" \
