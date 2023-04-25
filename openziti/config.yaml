@@ -10,7 +10,7 @@ init: false
 panel_icon: mdi:lightning-bolt-circle
 panel_title: NetFoundry OpenZITI
 ingress: true
-ingress_entry: dashboard/
+ingress_entry: hassio/addon/c52c569b_openziti/info
 ingress_port: 0
 arch:
   - aarch64
