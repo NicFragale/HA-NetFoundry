@@ -48,7 +48,9 @@ RUN set -x \
 	&& CLIVERSION="$(curl -LsH 'Accept: application/json' \
 	'https://github.com/home-assistant/cli/releases/latest' \
 	| jq -r '.tag_name')" \
-	&& curl -Lso "/usr/bin/ha" \
+	&& echo ${CLIVERSION} \
+	&& echo ${BUILD_ARCH} \
+	curl -Lso "/usr/bin/ha" \
 	"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" \
 	&& chmod a+x /usr/bin/ha
 
