@@ -12,7 +12,7 @@ configuration:
       [OPTIONAL]
       The directory that is used to place and refer to identities that have been created through the enrollment process.
       You normally should not have to modify this.
-      If not present, will default to (/opt/NetFoundry/identities).
+      If not present, will default to (/share/NetFoundry/identities).
   LogLevel:
     name: Log Level
     description: >-

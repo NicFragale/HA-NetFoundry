@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.4
+
+- Addresses an issue in build that prevents the image from launching correctly.
+- Updates README to reflect how you would remove enrolled identities.
+
 ## 1.1.3
 
 - Minor bug fixes.
