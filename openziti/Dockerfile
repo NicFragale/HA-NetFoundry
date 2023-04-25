@@ -1,5 +1,6 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
+ARG BUILD_ARCH
 
 # Add labels to the image.
 LABEL \
@@ -48,9 +49,7 @@ RUN set -x \
 	&& CLIVERSION="$(curl -LsH 'Accept: application/json' \
 	'https://github.com/home-assistant/cli/releases/latest' \
 	| jq -r '.tag_name')" \
-	&& echo ${CLIVERSION} \
-	&& echo ${BUILD_ARCH} \
-	curl -Lso "/usr/bin/ha" \
+	&& curl -Lso "/usr/bin/ha" \
 	"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" \
 	&& chmod a+x /usr/bin/ha
 
