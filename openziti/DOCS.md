@@ -6,18 +6,6 @@
 ![Supports armv7 Architecture][armv7-shield]
 ![Supports i386 Architecture][i386-shield]
 
-## Add the Repository
-
-One-Click:
-
-[![NetFoundry OpenZITI Repo Redirect](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FNicFragale%2FHA-NetFoundry)
-
-OR via UI:
-
-1. Navigate in your Home Assistant frontend to **Supervisor** -> **Add-on Store**.
-2. Find the "NetFoundry OpenZITI" add-on and click it.
-3. Click on the "INSTALL" button.
-
 ## Installation of the Addon
 
 After the repo is available in your UI, click the "install" button for the new NetFoundry OpenZITI Addon that appeared.
