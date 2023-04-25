@@ -47,7 +47,7 @@ RUN set -x \
 RUN set -x \
 	&& curl -Lso "/usr/bin/ha" \
 	"https://github.com/home-assistant/cli/releases/download/$(\
-	curl -LH 'Accept: application/json' \
+	curl -LsH 'Accept: application/json' \
 	'https://github.com/home-assistant/cli/releases/latest' \
 	| jq -r '.tag_name' \
 	)/ha_${BUILD_ARCH}" \
