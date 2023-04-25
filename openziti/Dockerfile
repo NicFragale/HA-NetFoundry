@@ -1,18 +1,24 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
-ARG BUILD_ARCH
 
+# Add labels to the image.
 LABEL \
-	io.hass.name="NetFoundry OpenZITI" \
-	io.hass.description="Zero Trust Application Specific Networking" \
+	io.hass.name="${BUILD_NAME}" \
+	io.hass.description="${BUILD_DESCRIPTION}" \
+	io.hass.arch="${BUILD_ARCH}" \
 	io.hass.type="addon" \
-	io.hass.arch="armhf|aarch64|i386|amd64" \
+	io.hass.version=${BUILD_VERSION} \
+	io.hass.image.licenses="APACHE2.0" \
+	io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
+	io.hass.image.documentation="https://github.com/NicFragale/HA-NetFoundry/blob/07b636f23eca256c185f695794c52be1feb3d124/openziti/DOCS.md" \
+	io.hass.image.created=${BUILD_DATE} \
+	io.hass.image.version=${BUILD_VERSION} \
 	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
 
 # Update the system and download required software.
 RUN set -x \
 	&& apk update \
-	&& apk add --no-cache sed iproute2 cmake build-base zlib-dev linux-headers gawk rsyslog git jq libuv-dev unzip zip openssl-dev doxygen libsodium-dev
+	&& apk add --no-cache sed iproute2 cmake build-base libatomic zlib-dev linux-headers gawk rsyslog git jq libuv-dev unzip zip openssl-dev doxygen libsodium-dev
 
 # Build NetFoundry OpenZITI.
 RUN set -x \
@@ -31,7 +37,6 @@ RUN set -x \
 	&& sed -i 's|/tmp/ziti-edge-tunnel.sock|/share/ziti-edge-tunnel.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
 	&& sed -i 's|/tmp/ziti-edge-tunnel-event.sock|/share/ziti-edge-tunnel-event.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
 	&& sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' ../_deps/ziti-sdk-c-src/inc_internal/metrics.h \
-	&& sed -i '/#include <features.h>/a # define __STDC_NO_ATOMICS__ 0' ../_deps/ziti-sdk-c-src/inc_internal/metrics.h \
 	&& sed -i 's|-luv_a|-luv|' /opt/NetFoundry/build/programs/ziti-edge-tunnel/CMakeFiles/ziti-edge-tunnel.dir/link.txt \
 	&& cd /opt/NetFoundry/ \
 	&& cmake --build ./build --target ziti-edge-tunnel \
@@ -42,11 +47,12 @@ RUN set -x \
 RUN set -x \
 	&& curl -Lso "/usr/bin/ha" \
 	"https://github.com/home-assistant/cli/releases/download/$(\
-	curl -LsH 'Accept: application/json' \
+	curl -LH 'Accept: application/json' \
 	'https://github.com/home-assistant/cli/releases/latest' \
 	| jq -r '.tag_name' \
 	)/ha_${BUILD_ARCH}" \
-	&& chmod a+x "/usr/bin/ha"
+	&& chmod a+x /usr/bin/ha \
+	&& /usr/bin/ha completion > /usr/share/bash-completion/completions/ha
 
 # All work has been done.
 COPY rootfs /
