@@ -45,12 +45,11 @@ RUN set -x \
 
 # Add the Home Assistant CLI.
 RUN set -x \
-	&& curl -Lso "/usr/bin/ha" \
-	"https://github.com/home-assistant/cli/releases/download/$(\
-	curl -LsH 'Accept: application/json' \
+	&& CLIVERSION="$(curl -LsH 'Accept: application/json' \
 	'https://github.com/home-assistant/cli/releases/latest' \
-	| jq -r '.tag_name' \
-	)/ha_${BUILD_ARCH}" \
+	| jq -r '.tag_name')" \
+	&& curl -Lso "/usr/bin/ha" \
+	"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" \
 	&& chmod a+x /usr/bin/ha
 
 # All work has been done.
