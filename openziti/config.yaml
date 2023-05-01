@@ -1,23 +1,25 @@
 name: "NetFoundry OpenZITI"
 description: "Zero Trust Application Specific Networking"
-version: "1.1.4"
+version: "1.2.0"
 slug: "openziti"
+url: "https://github.com/openziti"
 # To build locally on your platform, comment "image" out.
-image: "nfragale/openziti-{arch}"
+#image: "nfragale/openziti-{arch}"
 codenotary: "nicfragale+cas@gmail.com"
 startup: services
 init: false
-panel_icon: mdi:lightning-bolt-circle
-panel_title: NetFoundry OpenZITI
-ingress: true
-ingress_entry: hassio/addon/c52c569b_openziti/info
-ingress_port: 0
 arch:
   - aarch64
   - amd64
   - armhf
   - armv7
   - i386
+panel_icon: mdi:lightning-bolt-circle
+panel_title: "OpenZITI"
+ingress: true
+ingress_port: 8099
+ingress_entry: index.php
+ingress_stream: true
 hassio_api: true
 hassio_role: manager
 host_dbus: true

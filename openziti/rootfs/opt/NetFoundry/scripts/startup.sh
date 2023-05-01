@@ -4,7 +4,10 @@
 MyName="startup.sh"
 MyPurpose="NetFoundry ZITI Edge Tunnel Startup Script for Home Assistant."
 ####################################################################################################
-set -e -u -o pipefail
+#set -e -u -o pipefail
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
+	bashio::log.info "MyName: ${MyName}" &&
+	bashio::log.info "MyPurpose: ${MyPurpose}"
 
 ####################################################################################################
 # Functions
@@ -16,36 +19,36 @@ function CheckWait() {
 	while true; do
 		if [[ -d /proc/${TARGETPID} ]]; then
 			# Trigger a log entry only every 5m.
-			[[ $((++ITR%60)) -eq 0 ]] \
-				&& bashio::log.info "ZITI EDGE TUNNEL - [$((ITR/60))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
+			[[ $((++ITR % 60)) -eq 0 ]] &&
+				bashio::log.info "ZITI EDGE TUNNEL - [$((ITR / 60))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
 			sleep 5
 		else
-			bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR/60))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
+			bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR / 60))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
 			break
 		fi
 	done
 }
 
 function ObtainIPInfo() {
-	# Expect Input [0=IP/CIDR, 1=TYPE]i.
+	# Expect Input [0=IP/CIDR, 1=TYPE].
 	local INPUTADDRESS="${1}"
 	local OUTPUTTYPE="${2}"
 	local RAWADDRESS IP1 IP2 IP3 IP4 MASK1 MASK2 MASK3 MASK4
 
 	# Check for proper input.
-	[[ "${INPUTADDRESS%/*}" == "${INPUTADDRESS#*/}" ]] \
-		&& return 1
+	[[ "${INPUTADDRESS%/*}" == "${INPUTADDRESS#*/}" ]] &&
+		return 1
 
-	INPUTADDRESS=( "${INPUTADDRESS%/*}" "${INPUTADDRESS#*/}" )
-	RAWADDRESS=$(( 0xffffffff ^ ((1 << (32 - INPUTADDRESS[1])) - 1) ))
-	IFS=. read -r IP1 IP2 IP3 IP4 <<< "${INPUTADDRESS[0]}"
-	IFS=. read -r MASK1 MASK2 MASK3 MASK4 <<< "$(( (RAWADDRESS >> 24) & 0xff )).$(( (RAWADDRESS >> 16) & 0xff )).$(( (RAWADDRESS >> 8) & 0xff )).$(( RAWADDRESS & 0xff ))"
+	INPUTADDRESS=("${INPUTADDRESS%/*}" "${INPUTADDRESS#*/}")
+	RAWADDRESS=$((0xffffffff ^ ((1 << (32 - INPUTADDRESS[1])) - 1)))
+	IFS=. read -r IP1 IP2 IP3 IP4 <<<"${INPUTADDRESS[0]}"
+	IFS=. read -r MASK1 MASK2 MASK3 MASK4 <<<"$(((RAWADDRESS >> 24) & 0xff)).$(((RAWADDRESS >> 16) & 0xff)).$(((RAWADDRESS >> 8) & 0xff)).$((RAWADDRESS & 0xff))"
 
 	case ${OUTPUTTYPE} in
-		"NETWORK") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$((IP4 & MASK4))";;
-		"BROADCAST") echo "$((IP1 & MASK1 | 255-MASK1)).$((IP2 & MASK2 | 255-MASK2)).$((IP3 & MASK3 | 255-MASK3)).$((IP4 & MASK4 | 255-MASK4))";;
-		"FIRSTIP") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$(((IP4 & MASK4)+1))";;
-		"LASTIP") echo "$((IP1 & MASK1 | 255-MASK1)).$((IP2 & MASK2 | 255-MASK2)).$((IP & MASK3 | 255-MASK3)).$(((IP4 & MASK4 | 255-MASK4)-1))";;
+	"NETWORK") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$((IP4 & MASK4))" ;;
+	"BROADCAST") echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP3 & MASK3 | 255 - MASK3)).$((IP4 & MASK4 | 255 - MASK4))" ;;
+	"FIRSTIP") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$(((IP4 & MASK4) + 1))" ;;
+	"LASTIP") echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP & MASK3 | 255 - MASK3)).$(((IP4 & MASK4 | 255 - MASK4) - 1))" ;;
 	esac
 }
 
@@ -60,12 +63,14 @@ LOGLEVEL="${4}"
 ENROLLMENTJWT="${5}"
 ENROLLSTRING="enroll -j <(echo \"${5}\") -i \"${1}/${6}\""
 RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
-
-[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] \
-    && bashio::log.info "MyName: ${MyName}" \
-    && bashio::log.info "MyPurpose: ${MyPurpose}"
+SCRIPTDIRECTORY="/opt/NetFoundry/scripts"
+ASSISTAPPBINARIES=("nginx" "php-fpm8")
+ASSISTAPPOPTS=("" "")
 
 bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
+# Set permissions as required for normal operations.
+chmod 700 -vR "${SCRIPTDIRECTORY}"
+
 # Check identities folder for validity and list available identities.
 if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp "${IDENTITYDIRECTORY}"; then
 	bashio::log.error "ID LISTING ERROR"
@@ -79,7 +84,6 @@ if [[ ${ENROLLMENTJWT} != "UNSET" ]]; then
 	CheckWait "ENROLL" "${ENROLLPID}" &
 	wait $!
 	find "${IDENTITYDIRECTORY}" -maxdepth 1 -type f -empty -delete
-	sleep 5
 	bashio::log.notice "ZITI EDGE TUNNEL - ENROLL END"
 fi
 bashio::log.info "IDENTITIES: [$(ls -1 "${IDENTITYDIRECTORY}")]"
@@ -89,8 +93,8 @@ UPSTREAMRESOLVER="${3}"
 
 # Ensure existing configuration is saved for reinstallation later.
 bashio::log.info "ZITI_DNS_IP: ${ZITIDNSIP:=$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")}"
-cat /etc/resolv.conf > /etc/resolv.conf.system
-echo > /etc/resolv.conf.ziti
+cat /etc/resolv.conf >/etc/resolv.conf.system
+echo >/etc/resolv.conf.ziti
 NSSEMA="FALSE"
 NSERV="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
 while IFS=$'\n' read -r EachLine; do
@@ -100,8 +104,8 @@ while IFS=$'\n' read -r EachLine; do
 	else
 		echo "${EachLine}"
 	fi
-done < /etc/resolv.conf >> /etc/resolv.conf.ziti
-cat /etc/resolv.conf.ziti > /etc/resolv.conf
+done </etc/resolv.conf >>/etc/resolv.conf.ziti
+cat /etc/resolv.conf.ziti >/etc/resolv.conf
 
 # Set the system first resolver to ZITI.
 if ha dns options --servers dns://"${NSERV}" &>/dev/null; then
@@ -110,14 +114,25 @@ else
 	bashio::log.warning "Setup of system resolver via REST to [${NSERV}] failed."
 fi
 
+# Startup NGINX.
+for ((i = 0; i < ${#ASSISTAPPBINARIES[*]}; i++)); do
+	if ! pidof "${ASSISTAPPBINARIES[${i}]}"; then
+		${ASSISTAPPBINARIES[${i}]} ${ASSISTAPPOPTS[${i}]}
+		bashio::log.info "Assisting application \"${ASSISTAPPBINARIES[${i}]}\" has been started with syntax options \"${ASSISTAPPOPTS[${i}]}\"."
+	else
+		bashio::log.info "Assisting application \"${ASSISTAPPBINARIES[${i}]}\" is already running."
+	fi
+done
+
 # Set the syntax string for startup.
-RUNSTRING="run -I ${IDENTITYDIRECTORY} -d ${RESOLUTIONRANGE} -u ${UPSTREAMRESOLVER} -v ${LOGLEVEL}"
-bashio::log.info "INIT STRING: [${RUNTIME} ${RUNSTRING}]"
+RUNTIMEOPTS="run -I ${IDENTITYDIRECTORY} -d ${RESOLUTIONRANGE} -u ${UPSTREAMRESOLVER} -v ${LOGLEVEL}"
+bashio::log.info "INIT STRING: [${RUNTIME} ${RUNTIMEOPTS}]"
+
 bashio::log.notice "ZITI EDGE TUNNEL - PREINIT END"
 
 bashio::log.notice "ZITI EDGE TUNNEL - PROGRAM BEGIN"
 # Runtime is sent to the background for monitoring.
-/bin/bash -c "${RUNTIME} ${RUNSTRING}" &
+/bin/bash -c "${RUNTIME} ${RUNTIMEOPTS}" &
 ZETPID=$!
 CheckWait "MAIN LOOP" "${ZETPID}" &
 wait $!

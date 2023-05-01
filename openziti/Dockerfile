@@ -11,7 +11,7 @@ LABEL \
 	io.hass.version=${BUILD_VERSION} \
 	io.hass.image.licenses="APACHE2.0" \
 	io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
-	io.hass.image.documentation="https://github.com/NicFragale/HA-NetFoundry/blob/07b636f23eca256c185f695794c52be1feb3d124/openziti/DOCS.md" \
+	io.hass.image.documentation="https://github.com/NicFragale/HA-NetFoundry/blob/07b636f23eca256c185f695794c52be1feb3d124/openziti/README.md" \
 	io.hass.image.created=${BUILD_DATE} \
 	io.hass.image.version=${BUILD_VERSION} \
 	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
@@ -19,9 +19,20 @@ LABEL \
 # Update the system and download required software.
 RUN set -x \
 	&& apk update \
-	&& apk add --no-cache sed iproute2 cmake build-base libatomic zlib-dev linux-headers gawk rsyslog git jq libuv-dev unzip zip openssl-dev doxygen libsodium-dev
+	&& apk add --no-cache sudo sed iproute2 cmake build-base libatomic zlib-dev linux-headers gawk rsyslog git jq libuv-dev unzip zip openssl-dev doxygen libsodium-dev nginx php-fpm aha socat
 
-# Build NetFoundry OpenZITI.
+# Setup NGINX.
+RUN set -x \
+	&& mkdir -p /var/run/nginx \
+	&& mkdir -p /var/run/php \
+	&& mkdir -p /var/www/html \
+	&& sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
+	-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
+	-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
+	-e 's/nobody/nginx/g' /etc/php8/php-fpm.d/www.conf \
+	&& echo -e "nginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/zetdisplay.sh\n" >> /etc/sudoers
+
+# Build and setup NetFoundry OpenZITI.
 RUN set -x \
 	&& mkdir -vp /opt/NetFoundry/build \
 	&& cd /opt/NetFoundry/build \
@@ -42,7 +53,8 @@ RUN set -x \
 	&& cd /opt/NetFoundry/ \
 	&& cmake --build ./build --target ziti-edge-tunnel \
 	&& mv -vf build/programs/ziti-edge-tunnel/ziti-edge-tunnel . \
-	&& rm -rf build
+	&& rm -rf build \
+	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.
 RUN set -x \
@@ -53,5 +65,10 @@ RUN set -x \
 	"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" \
 	&& chmod a+x /usr/bin/ha
 
-# All work has been done.
+# Copy files into the image.
+COPY ingress.conf /etc/nginx/http.d/
+COPY default.conf /etc/nginx/http.d/
+COPY index.php /var/www/html
+COPY zetdisplay.php /var/www/html
+COPY jquery-3.6.4.min.js /var/www/html
 COPY rootfs /

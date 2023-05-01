@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0
+
+- Major update now includes ingress capabilities to reflect status page.
+- Multiple bug fixes.
+
 ## 1.1.4
 
 - Addresses an issue in build that prevents the image from launching correctly.
