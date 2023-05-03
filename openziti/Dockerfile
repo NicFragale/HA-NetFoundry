@@ -35,7 +35,7 @@ RUN set -x \
 	&& sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
 	-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
 	-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
-	-e 's/nobody/nginx/g' /etc/php8/php-fpm.d/www.conf \
+	-e 's/nobody/nginx/g' /etc/php8*/php-fpm.d/www.conf \
 	&& echo -e "nginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/zetdisplay.sh\n" >> /etc/sudoers
 
 # Build and setup NetFoundry OpenZITI.
