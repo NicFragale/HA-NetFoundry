@@ -10,7 +10,6 @@ MyPurpose="NetFoundry ZITI Edge Tunnel Host Information Display."
     bashio::log.info "MyPurpose: ${MyPurpose}"
 
 NFZTLogo=(
-    '                                                                                       '
     '███    ██ ███████ ████████ ███████  ██████  ██    ██ ███    ██ ██████  ██████  ██    ██'
     '████   ██ ██         ██    ██      ██    ██ ██    ██ ████   ██ ██   ██ ██   ██  ██  ██ '
     '██ ██  ██ █████      ██    █████   ██    ██ ██    ██ ██ ██  ██ ██   ██ ██████    ████  '
@@ -21,15 +20,15 @@ NFZTLogo=(
     '            ██    ██ ██   ██ ██      ████   ██    ███  ██    ██    ██                  '
     '            ██    ██ ██████  █████   ██ ██  ██   ███   ██    ██    ██                  '
     '            ██    ██ ██      ██      ██  ██ ██  ███    ██    ██    ██                  '
-    '             ██████  ██      ███████ ██   ████ ███████ ██    ██    ██                  '
-    '                                                                                       ')
-for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
-    printf '%s\n' "${NFZTLogo[${i}]}"
-done
-
+    '             ██████  ██      ███████ ██   ████ ███████ ██    ██    ██                  ')
 ZETVersion="$(/opt/NetFoundry/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
 
 if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
+    for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
+        printf "%s\n" "${NFZTLogo[${i}]}"
+    done
+    echo
+
     printf "\n%-30s: %s\n" "ZITI EDGE TUNNEL Version" "${ZETVersion}"
     echo
 
@@ -43,5 +42,10 @@ if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
     done
     echo
 else
-    printf "%s: %s\n" "ZITI EDGE TUNNEL Version" "${ZETVersion}"
+    printf "<span id=\"OPENZITITEXT\" class=\"FULLWIDTH\">\n"
+    for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
+        printf "<span>%s</span><br>" "${NFZTLogo[${i}]// /\&nbsp}"
+    done
+    printf "</span>"
+    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH FG-BOLD\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
 fi

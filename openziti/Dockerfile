@@ -1,3 +1,6 @@
+####################################################################################################
+# 20230501 - Written by Nic Fragale @ NetFoundry.
+####################################################################################################
 ARG BUILD_FROM
 FROM $BUILD_FROM
 ARG BUILD_ARCH
@@ -19,13 +22,16 @@ LABEL \
 # Update the system and download required software.
 RUN set -x \
 	&& apk update \
-	&& apk add --no-cache sudo sed iproute2 cmake build-base libatomic zlib-dev linux-headers gawk rsyslog git jq libuv-dev unzip zip openssl-dev doxygen libsodium-dev nginx php-fpm aha socat
+	&& apk add --no-cache sudo sed iproute2 cmake build-base \
+	libatomic zlib-dev linux-headers gawk rsyslog git jq \
+	libuv-dev unzip zip openssl-dev doxygen libsodium-dev \
+	nginx php-fpm socat
 
 # Setup NGINX.
 RUN set -x \
-	&& mkdir -p /var/run/nginx \
-	&& mkdir -p /var/run/php \
-	&& mkdir -p /var/www/html \
+	&& mkdir -vp /var/run/nginx \
+	&& mkdir -vp /var/run/php \
+	&& mkdir -vp /var/www/html/images \
 	&& sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
 	-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
 	-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
@@ -70,5 +76,7 @@ COPY ingress.conf /etc/nginx/http.d/
 COPY default.conf /etc/nginx/http.d/
 COPY index.php /var/www/html
 COPY zetdisplay.php /var/www/html
+COPY infodisplay.php /var/www/html
 COPY jquery-3.6.4.min.js /var/www/html
+COPY logo.png /var/www/html/images
 COPY rootfs /
