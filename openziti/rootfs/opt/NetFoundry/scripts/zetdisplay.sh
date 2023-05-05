@@ -362,9 +362,9 @@ function ZET_Status() {
 						if (PRINT_SERVICE[2] == "DIALONLY" || PRINT_SERVICE[2] == "DIALBIND") {
 
 							if (NETSESSION_FOUNDSEMAPHORE == "TRUE") {
-								printf "<span>┃┣━<span class=\"FG-GREEN\">%-12s</span>%s</span><br>","SESSAUTH&nbsp;","Authorization Token = "PRINT_NETSESSION[1]""
+								printf "<span>┃┣━<span class=\"FG-GREEN\">%-12s</span>%s</span><br>","SESSAUTH","Authorization Token = "PRINT_NETSESSION[1]""
 							} else {
-								printf "<span>┃┣━<span class=\"FG-RED\">%-12s</span>%s</span><br>","SESSAUTH&nbsp;","Authorization Token NOT PRESENT"
+								printf "<span>┃┣━<span class=\"FG-RED\">%-12s</span>%s</span><br>","SESSAUTH","Authorization Token NOT PRESENT"
 							}
 
 							# Match the SERVICE_INADDR@RESOLVED.

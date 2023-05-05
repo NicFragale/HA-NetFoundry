@@ -42,10 +42,10 @@ if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
     done
     echo
 else
-    printf "<span id=\"OPENZITITEXT\" class=\"FULLWIDTH\">\n"
+    printf "<span id=\"OPENZITITEXT\">\n"
     for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
         printf "<span>%s</span><br>" "${NFZTLogo[${i}]// /\&nbsp}"
     done
-    printf "</span>"
-    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH FG-BOLD\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
+    printf "</span><hr>"
+    printf "<span id=\"OPENZITIVERSION\" class=\"ANIMATED T500MS\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
 fi

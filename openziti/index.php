@@ -15,26 +15,32 @@
                 white-space: nowrap;
                 font-size: 1.5vmin;
             }
+            hr {margin: 0;}
             #BODYIMG {
                 background: url(images/logo.png) no-repeat center center fixed;
                 min-height: 100%;
-                min-width: 400px;
+                min-width: 100px;
                 width: 100%;
                 height: auto;
                 position: fixed;
                 top: 0;
                 left: 0;
-                opacity: 1;
                 z-index: -1;
             }
             @media screen and (max-width: 400px) {#BODYIMG {left: 50%; margin-left: -200px;}}
             .BODYWHITE {background-color: white; color: black;}
             .BODYBLACK {background-color: black; color: white;}
             .NOTVISIBLE {display: none;}
+            .OPACITY-A {opacity: 1;}
+            .OPACITY-B {opacity: 0.85;}
+            .OPACITY-C {opacity: 0.5;}
+            .OPACITY-D {opacity: 0.15;}
+            .OPACITY-E {opacity: 0;}
             .CENTERDATE, .CENTERINFO {text-align: center;}
             .CENTERDATE {float: right;}
             .FULLWIDTH {width: 100%; float: left;}
             .FG-BOLD {font-weight: bold;}
+            .FG-LARGE {font-size: 2.5vmin;}
             .FG-GRAY {color: gray;}
             .FG-WHITE {color: white;}
             .FG-BLACK {color: black;}
@@ -51,6 +57,11 @@
             .BG-GREEN {background-color: green;}
             .BG-BLUE {background-color: blue;}
             .BG-PURPLE {background-color: purple;}
+            .ANIMATED {transition: all ease;}
+            .T500MS {transition-duration: 1s;}
+            .T1S {transition-duration: 1s;}
+            .T2S {transition-duration: 2s;}
+            .T3S {transition-duration: 3s;}
         </style>
     </head>
     <body>
@@ -60,38 +71,49 @@
             var waitInt;
             if ((currentHour < 8) || (currentHour > 20)) {
                 $("body").addClass("BODYBLACK");
+                var setBG_AllFGClasses = new Array ('FG-GRAY','FG-WHITE');
             } else {
                 $("body").addClass("BODYWHITE");
+                var setBG_AllFGClasses = new Array ('FG-BLACK','FG-GRAY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
             }
+            var setBG_AllFGLength = setBG_AllFGClasses.length;
             $(document).ready(function(){
-                $("#INFOLOAD").load('infodisplay.php').delay(100).slideDown().promise().done(function(){
-                    $("#OPENZITITEXT").delay(5000).slideUp().promise().done(function(){
-                        $("#BODYIMG").delay().animate({
-                            opacity: 0.15
-                        }, 2000);
+                $("#BODYIMG").fadeIn();
+                $("#ZETLOAD").fadeIn();
+                setTimeout(function() {
+                    $.ajax({
+                        url: 'infodisplay.php',
+                        success: function(UpdateInfo) {
+                            $("#INFOLOAD").addClass("NOTVISIBLE").empty().append(UpdateInfo).promise().done(function() {
+                                $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
+                                $("#INFOLOAD").slideDown(1000);
+                                setTimeout(function() {
+                                    $("#OPENZITITEXT").slideUp();
+                                    $("#BODYIMG").addClass("OPACITY-D");
+                                    $("#OPENZITIVERSION").addClass("FG-BOLD FG-LARGE FG-BLUE");
+                                }, 8000);
+                            });
+                        }
                     });
-                });
-                $("#ZETLOAD").delay(500).slideDown().promise().done(function(){
-                    $("#ZETLOAD").removeClass("NOTVISIBLE");
-                    setInterval(function(){
-                        waitInt = 0;
-                        $.ajax({
-                            url: 'zetdisplay.php',
-                            success: function(UpdateDetails) {
-                                $("#ZETDETAIL").fadeOut(200).promise().done(function(){
-                                    $("#ZETLOAD").empty().append(UpdateDetails);
-                                    $("#ZETDETAIL").children().hide().each(function(){
-                                        $(this).delay(waitInt+=25).slideDown();
-                                    });
+                }, 1000);
+                setInterval(function() {
+                    waitInt = 0;
+                    $.ajax({
+                        url: 'zetdisplay.php',
+                        success: function(UpdateDetails) {
+                            $("#ZETDETAIL").fadeOut(200).promise().done(function() {
+                                $("#ZETLOAD").empty().removeClass("CENTERINFO").append(UpdateDetails);
+                                $("#ZETDETAIL").children().hide().each(function() {
+                                    $(this).delay(waitInt+=25).slideDown();
                                 });
-                            }
-                        });
-                    }, 5000);
-                });
+                            });
+                        }
+                    });
+                }, 5000);
             });
         </script>
-        <div id="BODYIMG"></div>
-        <div id="INFOLOAD" class="CENTERINFO FULLWIDTH NOTVISIBLE"><span class="FG-BLACK BG-YELLOW">INITIALIZING, PLEASE WAIT</span></div>
-        <div id="ZETLOAD" class="FULLWIDTH NOTVISIBLE"><span class="FG-BLACK BG-YELLOW">INITIALIZING, PLEASE WAIT</span></div>
+        <div id="BODYIMG" class="ANIMATED T2S OPACITY-C"></div>
+        <div id="INFOLOAD" class="CENTERINFO FULLWIDTH"><span></span></div>
+        <div id="ZETLOAD" class="CENTERINFO FULLWIDTH"><span class="FG-BLACK BG-YELLOW">INITIALIZING, PLEASE WAIT</span></div>
     </body>
 </html>
