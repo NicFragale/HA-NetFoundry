@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- Multiple bug fixes.
+- Enhanced the status page.
+
 ## 1.2.0
 
 - Major update now includes ingress capabilities to reflect status page.
