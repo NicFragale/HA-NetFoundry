@@ -66,49 +66,64 @@
     </head>
     <body>
         <script>
-            var currentTime = new Date();
-            var currentHour = currentTime.getHours();
-            var waitInt;
-            if ((currentHour < 8) || (currentHour > 20)) {
-                $("body").addClass("BODYBLACK");
-                var setBG_AllFGClasses = new Array ('FG-GRAY','FG-WHITE');
-            } else {
-                $("body").addClass("BODYWHITE");
-                var setBG_AllFGClasses = new Array ('FG-BLACK','FG-GRAY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
+            // Global variables declaration.
+            var waitInt, currentTime, currentHour, setBG_AllFGClasses, setBG_AllFGLength;
+
+            // Set the background color according to the time of day.
+            function UpdatePageColors() {
+                currentTime = new Date();
+                currentHour = currentTime.getHours();
+                if ((currentHour < 8) || (currentHour > 20)) {
+                    $("body").removeClass("BODYWHITE").addClass("BODYBLACK");
+                    setBG_AllFGClasses = new Array ('FG-GRAY','FG-WHITE');
+                } else {
+                    $("body").removeClass("BODYBLACK").addClass("BODYWHITE");
+                    setBG_AllFGClasses = new Array ('FG-BLACK','FG-GRAY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
+                }
+                setBG_AllFGLength = setBG_AllFGClasses.length;
             }
-            var setBG_AllFGLength = setBG_AllFGClasses.length;
+
+            // Update ZET information on the page.
+            function UpdateZETInfo() {
+                waitInt = 0;
+                $.ajax({
+                    url: 'zetdisplay.php',
+                    success: function(UpdateDetails) {
+                        $("#ZETDETAIL").fadeOut(200).promise().done(function() {
+                            $("#ZETLOAD").empty().removeClass("CENTERINFO").append(UpdateDetails);
+                            $("#ZETDETAIL").children().hide().each(function() {
+                                $(this).delay(waitInt+=25).slideDown();
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Page is ready, begin with oneshot actions.
             $(document).ready(function(){
                 $("#BODYIMG").fadeIn();
                 $("#ZETLOAD").fadeIn();
-                setTimeout(function() {
-                    $.ajax({
-                        url: 'infodisplay.php',
-                        success: function(UpdateInfo) {
-                            $("#INFOLOAD").addClass("NOTVISIBLE").empty().append(UpdateInfo).promise().done(function() {
-                                $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
-                                $("#INFOLOAD").slideDown(1000);
-                                setTimeout(function() {
-                                    $("#OPENZITITEXT").slideUp();
-                                    $("#BODYIMG").addClass("OPACITY-D");
-                                    $("#OPENZITIVERSION").addClass("FG-BOLD FG-LARGE FG-BLUE");
-                                }, 8000);
-                            });
-                        }
-                    });
-                }, 1000);
+                $.ajax({
+                    url: 'infodisplay.php',
+                    success: function(UpdateInfo) {
+                        $("#INFOLOAD").addClass("NOTVISIBLE").empty().append(UpdateInfo).promise().done(function() {
+                            $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
+                            $("#INFOLOAD").slideDown(1000);
+                            setTimeout(function() {
+                                $("#OPENZITITEXT").slideUp();
+                                $("#BODYIMG").addClass("OPACITY-D");
+                                $("#OPENZITIVERSION").addClass("FG-BOLD FG-LARGE FG-BLUE");
+                            }, 8000);
+                        });
+                    }
+                });
+
+                // Interval based actions.
                 setInterval(function() {
-                    waitInt = 0;
-                    $.ajax({
-                        url: 'zetdisplay.php',
-                        success: function(UpdateDetails) {
-                            $("#ZETDETAIL").fadeOut(200).promise().done(function() {
-                                $("#ZETLOAD").empty().removeClass("CENTERINFO").append(UpdateDetails);
-                                $("#ZETDETAIL").children().hide().each(function() {
-                                    $(this).delay(waitInt+=25).slideDown();
-                                });
-                            });
-                        }
-                    });
+                    UpdatePageColors
+                }, 30000);
+                setInterval(function() {
+                    UpdateZETInfo
                 }, 5000);
             });
         </script>

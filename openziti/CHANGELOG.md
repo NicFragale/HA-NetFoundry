@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- Fixes exposure of the ingress to only allow authorized users from the HA interface.
+
 ## 1.2.1
 
 - Multiple bug fixes.
