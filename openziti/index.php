@@ -80,7 +80,10 @@
                     $("body").removeClass("BODYBLACK").addClass("BODYWHITE");
                     setBG_AllFGClasses = new Array ('FG-BLACK','FG-GRAY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
                 }
-                setBG_AllFGLength = setBG_AllFGClasses.length;
+                if ($("#OPENZITITEXT").is(":visible")) {
+                    setBG_AllFGLength = setBG_AllFGClasses.length;
+                    $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
+                }
             }
 
             // Update ZET information on the page.
@@ -103,13 +106,12 @@
             $(document).ready(function(){
                 $("#BODYIMG").fadeIn();
                 $("#ZETLOAD").fadeIn();
-                UpdatePageColors;
                 $.ajax({
                     url: 'infodisplay.php',
                     success: function(UpdateInfo) {
                         $("#INFOLOAD").addClass("NOTVISIBLE").empty().append(UpdateInfo).promise().done(function() {
-                            $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
                             $("#INFOLOAD").slideDown(1000);
+                            UpdatePageColors;
                             setTimeout(function() {
                                 $("#OPENZITITEXT").slideUp();
                                 $("#BODYIMG").addClass("OPACITY-D");
@@ -121,10 +123,10 @@
 
                 // Interval based actions.
                 setInterval(function() {
-                    UpdatePageColors
+                    UpdatePageColors;
                 }, 30000);
                 setInterval(function() {
-                    UpdateZETInfo
+                    UpdateZETInfo;
                 }, 5000);
             });
         </script>
