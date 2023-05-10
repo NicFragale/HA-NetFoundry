@@ -20,57 +20,56 @@ LABEL \
 	maintainer="Nic Fragale <nic.fragale@netfoundry.io>"
 
 # Update the system and download required software.
-RUN set -x &&
-	apk update &&
-	apk add --no-cache sudo sed iproute2 cmake build-base \
-		libatomic zlib-dev linux-headers gawk rsyslog git jq \
-		libuv-dev unzip zip openssl-dev doxygen libsodium-dev \
-		nginx php-fpm socat
+RUN set -x \
+	&& apk update \
+	&& apk add --no-cache sudo sed iproute2 cmake build-base \
+	libatomic zlib-dev linux-headers gawk rsyslog git jq \
+	libuv-dev unzip zip openssl-dev doxygen libsodium-dev \
+	nginx php-fpm socat
 
 # Setup NGINX.
-RUN set -x &&
-	mkdir -vp /var/run/nginx &&
-	mkdir -vp /var/run/php &&
-	mkdir -vp /var/www/html/images &&
-	sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
-		-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
-		-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
-		-e 's/nobody/nginx/g' /etc/php8*/php-fpm.d/www.conf &&
-	echo -e "nginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/zetdisplay.sh\n" >>/etc/sudoers
+RUN set -x \
+	&& mkdir -vp /var/run/nginx \
+	&& mkdir -vp /var/run/php \
+	&& mkdir -vp /var/www/html/images \
+	&& sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
+	-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
+	-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
+	-e 's/nobody/nginx/g' /etc/php8*/php-fpm.d/www.conf \
+	&& echo -e "nginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/zetdisplay.sh\n" >> /etc/sudoers
 
 # Build and setup NetFoundry OpenZITI.
-RUN set -x &&
-	mkdir -vp /opt/NetFoundry/build &&
-	cd /opt/NetFoundry/build &&
-	ZTVERSION="$(
-		curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' |
-			awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' |
-			sort -rnt '.' -k1,1 -k2,2 -k3,3 |
-			head -n1
-	)" &&
-	curl -Lso "v${ZTVERSION}.zip" \
-		"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" &&
-	unzip v${ZTVERSION}.zip &&
-	cd ziti-tunnel-sdk-c-${ZTVERSION} &&
-	cmake -DGIT_VERSION=${ZTVERSION} -DUSE_OPENSSL=on -DHAVE_LIBUV=on -DHAVE_LIBSODIUM=on -DDISABLE_LIBSYSTEMD_FEATURE=ON -B../ &&
-	sed -i 's|/tmp/ziti-edge-tunnel.sock|/share/ziti-edge-tunnel.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c &&
-	sed -i 's|/tmp/ziti-edge-tunnel-event.sock|/share/ziti-edge-tunnel-event.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c &&
-	sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' ../_deps/ziti-sdk-c-src/inc_internal/metrics.h &&
-	sed -i 's|-luv_a|-luv|' /opt/NetFoundry/build/programs/ziti-edge-tunnel/CMakeFiles/ziti-edge-tunnel.dir/link.txt &&
-	cd /opt/NetFoundry/ &&
-	cmake --build ./build --target ziti-edge-tunnel &&
-	mv -vf build/programs/ziti-edge-tunnel/ziti-edge-tunnel . &&
-	rm -rf build &&
-	echo 'ziti:x:99:' >>/etc/group
+RUN set -x \
+	&& mkdir -vp /opt/NetFoundry/build \
+	&& cd /opt/NetFoundry/build \
+	&& ZTVERSION="$(\
+	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
+	| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
+	| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
+	| head -n1)" \
+	&& curl -Lso "v${ZTVERSION}.zip" \
+	"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
+	&& unzip v${ZTVERSION}.zip \
+	&& cd ziti-tunnel-sdk-c-${ZTVERSION} \
+	&& cmake -DGIT_VERSION=${ZTVERSION} -DUSE_OPENSSL=on -DHAVE_LIBUV=on -DHAVE_LIBSODIUM=on -DDISABLE_LIBSYSTEMD_FEATURE=ON -B../ \
+	&& sed -i 's|/tmp/ziti-edge-tunnel.sock|/share/ziti-edge-tunnel.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
+	&& sed -i 's|/tmp/ziti-edge-tunnel-event.sock|/share/ziti-edge-tunnel-event.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
+	&& sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' ../_deps/ziti-sdk-c-src/inc_internal/metrics.h \
+	&& sed -i 's|-luv_a|-luv|' /opt/NetFoundry/build/programs/ziti-edge-tunnel/CMakeFiles/ziti-edge-tunnel.dir/link.txt \
+	&& cd /opt/NetFoundry/ \
+	&& cmake --build ./build --target ziti-edge-tunnel \
+	&& mv -vf build/programs/ziti-edge-tunnel/ziti-edge-tunnel . \
+	&& rm -rf build \
+	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.
-RUN set -x &&
-	CLIVERSION="$(curl -LsH 'Accept: application/json' \
-		'https://github.com/home-assistant/cli/releases/latest' |
-		jq -r '.tag_name')" &&
-	curl -Lso "/usr/bin/ha" \
-		"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" &&
-	chmod a+x /usr/bin/ha
+RUN set -x \
+	&& CLIVERSION="$(curl -LsH 'Accept: application/json' \
+	'https://github.com/home-assistant/cli/releases/latest' \
+	| jq -r '.tag_name')" \
+	&& curl -Lso "/usr/bin/ha" \
+	"https://github.com/home-assistant/cli/releases/download/${CLIVERSION}/ha_${BUILD_ARCH}" \
+	&& chmod a+x /usr/bin/ha
 
 # Copy files into the image.
 COPY default.conf /etc/nginx/http.d/
