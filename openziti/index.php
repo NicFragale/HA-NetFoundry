@@ -103,6 +103,7 @@
             $(document).ready(function(){
                 $("#BODYIMG").fadeIn();
                 $("#ZETLOAD").fadeIn();
+                UpdatePageColors;
                 $.ajax({
                     url: 'infodisplay.php',
                     success: function(UpdateInfo) {
