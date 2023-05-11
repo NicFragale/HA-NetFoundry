@@ -111,7 +111,7 @@
                     success: function(UpdateInfo) {
                         $("#INFOLOAD").addClass("NOTVISIBLE").empty().append(UpdateInfo).promise().done(function() {
                             $("#INFOLOAD").slideDown(1000);
-                            UpdatePageColors;
+                            UpdatePageColors();
                             setTimeout(function() {
                                 $("#OPENZITITEXT").slideUp();
                                 $("#BODYIMG").addClass("OPACITY-D");
@@ -123,10 +123,10 @@
 
                 // Interval based actions.
                 setInterval(function() {
-                    UpdatePageColors;
+                    UpdatePageColors();
                 }, 30000);
                 setInterval(function() {
-                    UpdateZETInfo;
+                    UpdateZETInfo();
                 }, 5000);
             });
         </script>
