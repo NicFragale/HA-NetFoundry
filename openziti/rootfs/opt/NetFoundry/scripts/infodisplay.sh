@@ -47,5 +47,5 @@ else
         printf "<span>%s</span><br>" "${NFZTLogo[${i}]// /\&nbsp}"
     done
     printf "</span><hr>"
-    printf "<span id=\"OPENZITIVERSION\" class=\"ANIMATED T500MS\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
+    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH BG-LTGREY ANIMATED T500MS\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
 fi

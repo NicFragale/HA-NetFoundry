@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Bug fixes and enhancements to the look and feel of the ingress system.
+
 ## 1.2.2
 
 - Fixes exposure of the ingress to only allow authorized users from the HA interface.

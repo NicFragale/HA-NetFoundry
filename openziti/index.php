@@ -27,10 +27,12 @@
                 left: 0;
                 z-index: -1;
             }
-            @media screen and (max-width: 400px) {#BODYIMG {left: 50%; margin-left: -200px;}}
-            .BODYWHITE {background-color: white; color: black;}
-            .BODYBLACK {background-color: black; color: white;}
+            #ZETLOADSTATUS {line-height: 5em; cursor: pointer;}
+            .BODYOVERLAY {height: 100%; width: 100%; position: fixed;}
+            .BODYWHITE {background: white; text-shadow: 0px 0px 1px white;}
+            .BODYBLACK {background: black; text-shadow: 0px 0px 1px black;}
             .NOTVISIBLE {display: none;}
+            .FG-SHADOW {text-shadow: 0px 0px 3px blue;}
             .OPACITY-A {opacity: 1;}
             .OPACITY-B {opacity: 0.85;}
             .OPACITY-C {opacity: 0.5;}
@@ -40,8 +42,10 @@
             .CENTERDATE {float: right;}
             .FULLWIDTH {width: 100%; float: left;}
             .FG-BOLD {font-weight: bold;}
+            .FG-ITALIC {font-style: italic;}
             .FG-LARGE {font-size: 2.5vmin;}
-            .FG-GRAY {color: gray;}
+            .FG-GREY {color: grey;}
+            .FG-LTGREY {color: lightgrey;}
             .FG-WHITE {color: white;}
             .FG-BLACK {color: black;}
             .FG-YELLOW {color: yellow;}
@@ -49,7 +53,8 @@
             .FG-GREEN {color: green;}
             .FG-BLUE {color: blue;}
             .FG-PURPLE {color: purple;}
-            .BG-GRAY {background-color: gray;}
+            .BG-GREY {background-color: grey;}
+            .BG-LTGREY {background-color: lightgrey;}
             .BG-WHITE {background-color: white;}
             .BG-BLACK {background-color: black;}
             .BG-YELLOW {background-color: yellow;}
@@ -57,8 +62,11 @@
             .BG-GREEN {background-color: green;}
             .BG-BLUE {background-color: blue;}
             .BG-PURPLE {background-color: purple;}
+            .BG-NONE {background-color: unset;}
             .ANIMATED {transition: all ease;}
-            .T500MS {transition-duration: 1s;}
+            .T25MS {transition-duration: 0.025s;}
+            .T100MS {transition-duration: 0.1s;}
+            .T500MS {transition-duration: 0.5s;}
             .T1S {transition-duration: 1s;}
             .T2S {transition-duration: 2s;}
             .T3S {transition-duration: 3s;}
@@ -67,45 +75,56 @@
     <body>
         <script>
             // Global variables declaration.
-            var waitInt, currentTime, currentHour, setBG_AllFGClasses, setBG_AllFGLength;
+            var flagPause, waitInt, currentTime, currentHour, setColor_AllFGClasses, setColor_AllFGLength;
 
             // Set the background color according to the time of day.
             function UpdatePageColors() {
                 currentTime = new Date();
                 currentHour = currentTime.getHours();
                 if ((currentHour < 8) || (currentHour > 20)) {
-                    $("body").removeClass("BODYWHITE").addClass("BODYBLACK");
-                    setBG_AllFGClasses = new Array ('FG-GRAY','FG-WHITE');
+                    $("#BODYPARENT").removeClass("BODYWHITE").addClass("BODYBLACK");
+                    $("body").removeClass().addClass("FG-WHITE");
+                    setColor_AllFGClasses = new Array ('FG-GREY','FG-WHITE');
                 } else {
-                    $("body").removeClass("BODYBLACK").addClass("BODYWHITE");
-                    setBG_AllFGClasses = new Array ('FG-BLACK','FG-GRAY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
+                    $("#BODYPARENT").removeClass("BODYBLACK").addClass("BODYWHITE");
+                    $("body").removeClass().addClass("FG-BLACK");
+                    setColor_AllFGClasses = new Array ('FG-BLACK','FG-GREY','FG-RED','FG-GREEN','FG-BLUE','FG-PURPLE');
                 }
-                if ($("#OPENZITITEXT").is(":visible")) {
-                    setBG_AllFGLength = setBG_AllFGClasses.length;
-                    $("#OPENZITITEXT").addClass(setBG_AllFGClasses[Math.floor(Math.random()*setBG_AllFGLength)]);
-                }
+                setColor_AllFGLength = setColor_AllFGClasses.length;
+                $("#OPENZITITEXT").removeClass().addClass("FG-SHADOW " + setColor_AllFGClasses[Math.floor(Math.random()*setColor_AllFGLength)]);
             }
 
             // Update ZET information on the page.
             function UpdateZETInfo() {
                 waitInt = 0;
+                if ($("#ZETLOADSTATUS").hasClass("NOTVISIBLE")) {
+                    flagPause = "UNSET";
+                } else {
+                    flagPause = "SET";
+                }
                 $.ajax({
                     url: 'zetdisplay.php',
+                    data: {'flagPause': flagPause},
                     success: function(UpdateDetails) {
-                        $("#ZETDETAIL").fadeOut(200).promise().done(function() {
-                            $("#ZETLOAD").empty().removeClass("CENTERINFO").append(UpdateDetails);
-                            $("#ZETDETAIL").children().hide().each(function() {
-                                $(this).delay(waitInt+=25).slideDown();
+                        if (flagPause == "SET") {
+                            $("#ZETDATE-BROWSER").replaceWith(UpdateDetails);
+                        } else {
+                            $("#ZETDETAIL").fadeOut(200).promise().done(function() {
+                                $("#ZETLOAD").empty().removeClass("CENTERINFO").append(UpdateDetails);
+                                $(".ZETDETAILLINE").hide().addClass("ANIMATED T500MS BG-YELLOW").each(function() {
+                                    $(this).delay(waitInt+=50).slideDown(25).promise().done(function() {
+                                        $(this).removeClass("BG-YELLOW");
+                                    });
+                                });
                             });
-                        });
+                        }
                     }
                 });
             }
 
             // Page is ready, begin with oneshot actions.
             $(document).ready(function(){
-                $("#BODYIMG").fadeIn();
-                $("#ZETLOAD").fadeIn();
+                $("#BODYPARENT").fadeIn();
                 $.ajax({
                     url: 'infodisplay.php',
                     success: function(UpdateInfo) {
@@ -114,24 +133,40 @@
                             UpdatePageColors();
                             setTimeout(function() {
                                 $("#OPENZITITEXT").slideUp();
-                                $("#BODYIMG").addClass("OPACITY-D");
+                                $("#BODYIMG").removeClass("OPACITY-C").addClass("OPACITY-D");
                                 $("#OPENZITIVERSION").addClass("FG-BOLD FG-LARGE FG-BLUE");
+                                $("body").on("click", function() {
+                                    $("#ZETLOADSTATUS").fadeToggle().promise().done(function() {
+                                        $("#ZETLOADSTATUS").toggleClass("NOTVISIBLE");
+                                    });
+                                });
                             }, 8000);
                         });
                     }
                 });
 
-                // Interval based actions.
+                // Setup click and interval based actions.
                 setInterval(function() {
                     UpdatePageColors();
                 }, 30000);
                 setInterval(function() {
+                    if ($("#ZETLOADSTATUS").is(":visible")) {
+                        UpdatePageColors();
+                        $("#OPENZITITEXT").slideDown();
+                    } else {
+                        $("#OPENZITITEXT").slideUp();
+                    }
                     UpdateZETInfo();
-                }, 5000);
+                }, 8000);
             });
         </script>
-        <div id="BODYIMG" class="ANIMATED T2S OPACITY-C"></div>
-        <div id="INFOLOAD" class="CENTERINFO FULLWIDTH"><span></span></div>
-        <div id="ZETLOAD" class="CENTERINFO FULLWIDTH"><span class="FG-BLACK BG-YELLOW">INITIALIZING, PLEASE WAIT</span></div>
+        <div id="BODYPARENT" class="BODYOVERLAY NOTVISIBLE">
+            <span id="INFOLOAD" class="CENTERINFO FULLWIDTH"></span>
+            <span id="ZETLOADSTATUS" class="CENTERINFO FULLWIDTH NOTVISIBLE FG-BOLD FG-LARGE FG-BLACK BG-YELLOW">REFRESH PAUSED - CLICK TO RESUME</span>
+            <span id="ZETLOAD" class="CENTERINFO FULLWIDTH">
+                <span class="FULLWIDTH FG-BLACK BG-YELLOW">INITIALIZING, PLEASE WAIT</span>
+            </span>
+            <span id="BODYIMG" class="ANIMATED T2S OPACITY-C"></span>
+        </div>
     </body>
 </html>

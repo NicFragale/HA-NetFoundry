@@ -23,7 +23,7 @@ function ZET_Status() {
 		if [[ -e ${ZETSock} ]]; then
 			ZETSocksDir="${ZETSock%\/*}"
 		else
-			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span><br>" "The ZITI EDGE TUNNEL socket is not available. Please wait or restart."
+			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The ZITI EDGE TUNNEL socket is not available. Please wait or restart."
 			return
 		fi
 	fi
@@ -40,7 +40,7 @@ function ZET_Status() {
 
 		# Initial analysis.
 		if [[ ${#ZETResults[*]} -lt 1 ]]; then
-			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span><br>" "The query resulted in no data."
+			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The query resulted in no data."
 			return
 		fi
 
@@ -185,13 +185,13 @@ function ZET_Status() {
 						if (/\"forwardPort\":true/) {
 							SERVICE_SERVERFORWARDPORT="<span class=\"FG-GREEN\">YES</span>"
 						} else {
-							SERVICE_SERVERFORWARDPORT="<span class=\"FG-GRAY\">NO</span>"
+							SERVICE_SERVERFORWARDPORT="<span class=\"FG-GREY\">NO</span>"
 						}
 
 						if (/\"forwardProtocol\":true/) {
 							SERVICE_SERVERFORWARDPROTOCOL="<span class=\"FG-GREEN\">YES</span>"
 						} else {
-							SERVICE_SERVERFORWARDPROTOCOL="<span class=\"FG-GRAY\">NO</span>"
+							SERVICE_SERVERFORWARDPROTOCOL="<span class=\"FG-GREY\">NO</span>"
 						}
 
 						SERVICE_SERVERFULLHOST=SERVICE_SERVERHOST":["SERVICE_SERVERPORT"]/["SERVICE_SERVERPROTOCOL"] (FWDPORT="SERVICE_SERVERFORWARDPORT") (FWDPROTO="SERVICE_SERVERFORWARDPROTOCOL")"
@@ -304,7 +304,8 @@ function ZET_Status() {
 					for (EACH_ZITICONTEXT in ZITICONTEXT_REPORT) {
 						# ZITICONTEXTS # [1]=IDNAME,[2]=ID
 						split(ZITICONTEXT_REPORT[EACH_ZITICONTEXT],PRINT_ZITICONTEXT,",")
-						printf "┏<span class=\"FG-PURPLE\">%02d/%-9s/%s</span><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┏</span><span class=\"FG-GREEN\">%02d/%s/%s</span></span><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃</span></span><br>"
 					}
 
 					# Combine the SERVICE arrays in proper order and sorting.
@@ -330,7 +331,7 @@ function ZET_Status() {
 						}
 
 						# First output line with service information.
-						printf "<span>┃</span><br><span>┣┳%04d/%4s/%9s/%-75s</span><br>",EACH_SERVICE,PRINT_SERVICE[2],PRINT_SERVICE[1],PRINT_SERVICE[3]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┣┳</span><span>%04d/%s/%s/%s</span></span><br>",EACH_SERVICE,PRINT_SERVICE[2],PRINT_SERVICE[1],PRINT_SERVICE[3]
 
 						# Net Sessions, Service Authorization token assessment.
 						NETSESSION_FOUNDSEMAPHORE="FALSE"
@@ -348,23 +349,23 @@ function ZET_Status() {
 
 						# Service type output with color indicator for local applicability.
 						if (PRINT_SERVICE[2] == "DIALONLY") {
-							SERVICE_INGRESSTYPE="<span class=\"FG-BLUE\">INGRESS&nbsp;</span>"
-							SERVICE_EGRESSTYPE="<span class=\"FG-GRAY\">EGRESS&nbsp;&nbsp;</span>"
+							SERVICE_INGRESSTYPE="<span class=\"FG-WHITE BG-BLUE\">INGRESS&nbsp;&nbsp;</span>"
+							SERVICE_EGRESSTYPE="<span class=\"FG-GREY\">EGRESS&nbsp;&nbsp;&nbsp;</span>"
 						} else if (PRINT_SERVICE[2] == "DIALBIND") {
-							SERVICE_INGRESSTYPE="<span class=\"FG-BLUE\">INGRESS&nbsp;</span>"
-							SERVICE_EGRESSTYPE="<span class=\"FG-BLUE\">EGRESS&nbsp;&nbsp;</span>"
+							SERVICE_INGRESSTYPE="<span class=\"FG-WHITE BG-BLUE\">INGRESS&nbsp;&nbsp;</span>"
+							SERVICE_EGRESSTYPE="<span class=\"FG-WHITE BG-BLUE\">EGRESS&nbsp;&nbsp;&nbsp;</span>"
 						} else if (PRINT_SERVICE[2] == "BINDONLY") {
-							SERVICE_INGRESSTYPE="<span class=\"FG-GRAY\">INGRESS&nbsp;</span>"
-							SERVICE_EGRESSTYPE="<span class=\"FG-BLUE\">EGRESS&nbsp;&nbsp;</span>"
+							SERVICE_INGRESSTYPE="<span class=\"FG-GREY\">INGRESS&nbsp;&nbsp;</span>"
+							SERVICE_EGRESSTYPE="<span class=\"FG-WHITE BG-BLUE\">EGRESS&nbsp;&nbsp;&nbsp;</span>"
 						}
 
 						# Match the SERVICE_TYPE.
 						if (PRINT_SERVICE[2] == "DIALONLY" || PRINT_SERVICE[2] == "DIALBIND") {
 
 							if (NETSESSION_FOUNDSEMAPHORE == "TRUE") {
-								printf "<span>┃┣━<span class=\"FG-GREEN\">%-12s</span>%s</span><br>","SESSAUTH","Authorization Token = "PRINT_NETSESSION[1]""
+								printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span><span class=\"FG-GREEN\">%s</span><span>%s</span></span><br>","SESSAUTH&nbsp;&nbsp;","Authorization Token = "PRINT_NETSESSION[1]""
 							} else {
-								printf "<span>┃┣━<span class=\"FG-RED\">%-12s</span>%s</span><br>","SESSAUTH","Authorization Token NOT PRESENT"
+								printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span><span class=\"FG-RED\">%s</span><span>%s</span></span><br>","SESSAUTH&nbsp;&nbsp;","Authorization Token NOT PRESENT"
 							}
 
 							# Match the SERVICE_INADDR@RESOLVED.
@@ -373,14 +374,14 @@ function ZET_Status() {
 							for (EACH_CLIENTHOSTRESOLUTION in ARRAY_CLIENTHOSTRESOLUTIONS) {
 								split(ARRAY_CLIENTHOSTRESOLUTIONS[EACH_CLIENTHOSTRESOLUTION],NAMEANDRESOLUTION,"@")
 								if (NAMEANDRESOLUTION[2] == "TRYDNS:") {
-									printf "<span>┃┣┳%-12s [%s]:%s</span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
-									printf "<span>┃┃┗━<span class=\"FG-RED\">%-11s</span></span><br>","ZITIDNS&nbsp;","NO RESOLUTION"
+									printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣┳</span><span>%s %s:%s</span></span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
+									printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┃┗━</span><span class=\"FG-RED\">%s </span><span>%s</span></span><br>","ZITIDNS&nbsp;","NO RESOLUTION"
 								} else if (NAMEANDRESOLUTION[2] == "IPONLY") {
-									printf "<span>┃┣━%-12s [%s]:%s</span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
+									printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span><span>%s %s:%s</span></span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
 								} else {
 									gsub(/TRYDNS:/,"",NAMEANDRESOLUTION[2])
-									printf "<span>┃┣┳%-12s [%s]:%s</span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
-									printf "<span>┃┃┗━<span class=\"FG-GREEN\">%-11s</span>%s</span><br>","ZITIDNS&nbsp;",NAMEANDRESOLUTION[2]
+									printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣┳</span><span>%s %s:%s</span></span><br>",SERVICE_INGRESSTYPE,NAMEANDRESOLUTION[1],ARRAY_CLIENTHOSTS[2]
+									printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┃┗━</span><span class=\"FG-BLUE\">%s </span><span>%s</span></span><br>","ZITIDNS&nbsp;",NAMEANDRESOLUTION[2]
 								}
 							}
 
@@ -390,7 +391,7 @@ function ZET_Status() {
 							split(PRINT_SERVICE[4],ARRAY_CLIENTHOSTS,"=")
 							split(ARRAY_CLIENTHOSTS[1],ARRAY_CLIENTHOST," ")
 							for (EACH_CLIENTHOST in ARRAY_CLIENTHOST)
-								printf "<span>┃┣━%s [%s]:%s</span><br>",SERVICE_INGRESSTYPE,ARRAY_CLIENTHOST[EACH_CLIENTHOST],ARRAY_CLIENTHOSTS[2]
+								printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span><span>%s %s:%s</span></span><br>",SERVICE_INGRESSTYPE,ARRAY_CLIENTHOST[EACH_CLIENTHOST],ARRAY_CLIENTHOSTS[2]
 
 						}
 
@@ -429,17 +430,36 @@ function ZET_Status() {
 
 										# Match the CHANNEL_STATE.
 										if (PRINT_CHANNEL[3] == "CONNECTED") {
-											PRINT_CHANNEL[3]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[3]"</span>"
+											PRINT_CHANNEL[3]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[3]"&nbsp;</span>"
 										} else {
-											PRINT_CHANNEL[3]="<span class=\"FG-RED\">"PRINT_CHANNEL[3]"</span>"
+											PRINT_CHANNEL[3]="<span class=\"FG-RED\">"PRINT_CHANNEL[3]"&nbsp;&nbsp;&nbsp;&nbsp;</span>"
+										}
+
+										# Emphasize latency if above threshold.
+										if (PRINT_CHANNEL[4] < 50) {
+											PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"</span>"
+										} else if (PRINT_CHANNEL[4] < 100) {
+											PRINT_CHANNEL[4]="<span class=\"FG-YELLOW\">"PRINT_CHANNEL[4]"</span>"
+										} else {
+											PRINT_CHANNEL[4]="<span class=\"FG-RED\">"PRINT_CHANNEL[4]"</span>"
 										}
 
 										# Match the CONNECTION_STATE, and print the information.
-										if (PRINT_CONNECTION[4] == "BOUND" || PRINT_CONNECTION[4] == "CONNECTED") {
-											printf "<span>┃┣━<span class=\"FG-GREEN\">%-12s</span> via [%-15s] [%sms]</span><br>",PRINT_CONNECTION[4],PRINT_CHANNEL[2],PRINT_CHANNEL[4]
+										printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span>"
+										if (PRINT_CONNECTION[4] == "BOUND") {
+											printf "<span class=\"FG-WHITE BG-GREEN\">%s </span>",PRINT_CONNECTION[4]"&nbsp;&nbsp;&nbsp;&nbsp;"
+										} else if (PRINT_CONNECTION[4] == "CONNECTED") {
+											printf "<span class=\"FG-WHITE BG-GREEN\">%s </span>",PRINT_CONNECTION[4]
 										} else {
-											printf "<span>┃┣━<span class=\"FG-RED\">%-12s</span> via [%-15s] [%sms]</span><br>",PRINT_CONNECTION[4],PRINT_CHANNEL[2],PRINT_CHANNEL[4]
+											printf "<span class=\"FG-BLACK BG-YELLOW\">%s </span>",PRINT_CONNECTION[4]
 										}
+										# Ascertain the name and URL parts of the PRINT_CHANNEL.
+										split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
+										printf "<span class=\"FG-ITALIC\"> to </span><span>%s</span></span><br>",PRINT_CHANNELPARTS[1]
+										printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┃&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>"
+										printf "<span class=\"FG-ITALIC\"> at </span><span>%s</span></span><br>",PRINT_CHANNELPARTS[2]
+										printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┃&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>"
+										printf "<span class=\"FG-ITALIC\"> with latency </span><span>%s</span></span><br>",PRINT_CHANNEL[4]
 
 										break
 
@@ -467,7 +487,7 @@ function ZET_Status() {
 							}
 
 						}
-						printf "<span>┃┗━%-12s %s</span><br>",SERVICE_EGRESSTYPE,PRINT_SERVICE[5]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┗━</span><span>%s %s</span></span><br>",SERVICE_EGRESSTYPE,PRINT_SERVICE[5]
 
 					}
 
@@ -475,8 +495,9 @@ function ZET_Status() {
 
 						# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
 						split(CHANNEL_ORPHANS[EACH_CHANNELORPHAN],PRINT_ORPHAN,",")
-						printf "<span>┃</span><br><span>┣┳%04d/CHANNEL_ORPHAN/%s</span><br>",++EACH_CHANNELORPHANCOUNTER,PRINT_ORPHAN[1]
-						printf "<span>┃┗━<span class=\"FG-WHITE BG-RED\">%-12s</span> Channel \"%s\" is not in a proper state to handle a service.</span><br>",PRINT_ORPHAN[3],PRINT_ORPHAN[2]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃</span></span><br>"
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┣┳</span><span>%04d/CHANNEL_ORPHAN/%s</span></span><br>",++EACH_CHANNELORPHANCOUNTER,PRINT_ORPHAN[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┗━</span><span class=\"FG-WHITE BG-RED\">%s</span><span>Channel \"%s\" is not in a proper state to handle a service.</span></span><br>",PRINT_ORPHAN[3],PRINT_ORPHAN[2]
 
 					}
 
@@ -484,21 +505,24 @@ function ZET_Status() {
 
 						# CONNECTION ORPHANS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELROUTER,[4]=STATE
 						split(CONNECTION_ORPHANS[EACH_CONNECTIONORPHAN],PRINT_ORPHAN,",")
-						printf "<span>┃</span><br><span>┣┳%04d/CONNECTION_ORPHAN/%s</span><br>",++EACH_CONNECTIONORPHANCOUNTER,PRINT_ORPHAN[1]
-						printf "<span>┃┗━<span class=\"FG-WHITE BG-RED\">%-12s</span> Linking is broken between channel \"%s\" and service \"%s\".</span><br>",PRINT_ORPHAN[4],PRINT_ORPHAN[3],PRINT_ORPHAN[2]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃</span></span><br>"
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┣┳</span><span>%04d/CONNECTION_ORPHAN/%s</span></span><br>",++EACH_CONNECTIONORPHANCOUNTER,PRINT_ORPHAN[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┗━</span><span class=\"FG-WHITE BG-RED\">%s</span><span> Linking is broken between channel \"%s\" and service \"%s\".</span></span><br>",PRINT_ORPHAN[4],PRINT_ORPHAN[3],PRINT_ORPHAN[2]
 
 					}
 
 					# Final printing line.
 					if (ZITICONTEXT_COUNTER == ZITICONTEXT_COUNTEREND) {
-						printf "<span>┃</span><br>┗<span class=\"FG-PURPLE\">%02d/%-9s/%s</span><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃</span></span><br>"
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┗</span><span class=\"FG-GREEN\">%02d/%-9s/%s</span></span><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
 					} else {
-						printf "<span>┃</span><br>┗<span class=\"FG-PURPLE\">%02d/%-9s/%s</span><br><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃</span></span><br>"
+						printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┗</span><span class=\"FG-GREEN\">%02d/%-9s/%s</span><br><br>",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]
 					}
 
 				}
 			' "${ZETResults[${i}]}" 2>/dev/null ||
-				printf "<span class=\"FG-WHITE BG-RED\">%s</span><br>" "ERROR: Parsing (AWK) failed. Please report this!"
+				printf "<span class=\"FG-WHITE BG-RED\">%s</span></span><br>" "ERROR: Parsing (AWK) failed. Please report this!"
 
 		done
 
@@ -507,7 +531,7 @@ function ZET_Status() {
 
 	else
 
-		printf "<span class=\"FG-WHITE BG-RED\">%s</span><br>" "Could not find the ZET Socket to connect to!"
+		printf "<span class=\"FG-WHITE BG-RED\">%s</span></span><br>" "Could not find the ZET Socket to connect to!"
 		return
 
 	fi
