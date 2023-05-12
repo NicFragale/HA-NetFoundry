@@ -208,16 +208,16 @@ function ZET_Status() {
 							gsub(/\*\.?/,"",FINALRESOLVE) # Remove star domains.
 							if (SERVICE_TYPE == "DIALONLY" || SERVICE_TYPE == "DIALBIND") {
 								if (match(ARRAY_CLIENTHOSTS[EACH_CLIENTHOST],/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) {
-									ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]=ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"@IPONLY"
+									ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]="["ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"]@IPONLY"
 								} else {
 									RUNCOMMAND = "echo -n TRYDNS:$(dig +short "FINALRESOLVE" 2>&1)"
 									RUNCOMMAND | getline EACH_CLIENTHOSTRESOLVED
 									close(RUNCOMMAND)
 									gsub(/ /,"|",EACH_CLIENTHOSTRESOLVED)
-									ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]=ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"@"EACH_CLIENTHOSTRESOLVED
+									ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]="["ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"]@"EACH_CLIENTHOSTRESOLVED
 								}
 							} else {
-								ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]=ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]
+								ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]="["ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"]"
 							}
 						}
 
@@ -437,21 +437,21 @@ function ZET_Status() {
 
 										# Emphasize latency if above threshold.
 										if (PRINT_CHANNEL[4] < 50) {
-											PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"</span>"
+											PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"ms</span>"
 										} else if (PRINT_CHANNEL[4] < 100) {
-											PRINT_CHANNEL[4]="<span class=\"FG-YELLOW\">"PRINT_CHANNEL[4]"</span>"
+											PRINT_CHANNEL[4]="<span class=\"FG-YELLOW\">"PRINT_CHANNEL[4]"ms</span>"
 										} else {
-											PRINT_CHANNEL[4]="<span class=\"FG-RED\">"PRINT_CHANNEL[4]"</span>"
+											PRINT_CHANNEL[4]="<span class=\"FG-RED\">"PRINT_CHANNEL[4]"ms</span>"
 										}
 
 										# Match the CONNECTION_STATE, and print the information.
 										printf "<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┣━</span>"
 										if (PRINT_CONNECTION[4] == "BOUND") {
-											printf "<span class=\"FG-WHITE BG-GREEN\">%s </span>",PRINT_CONNECTION[4]"&nbsp;&nbsp;&nbsp;&nbsp;"
+											printf "<span class=\"FG-WHITE BG-GREEN\">%s</span>",PRINT_CONNECTION[4]"&nbsp;&nbsp;&nbsp;&nbsp;"
 										} else if (PRINT_CONNECTION[4] == "CONNECTED") {
-											printf "<span class=\"FG-WHITE BG-GREEN\">%s </span>",PRINT_CONNECTION[4]
+											printf "<span class=\"FG-WHITE BG-GREEN\">%s</span>",PRINT_CONNECTION[4]
 										} else {
-											printf "<span class=\"FG-BLACK BG-YELLOW\">%s </span>",PRINT_CONNECTION[4]
+											printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span>",PRINT_CONNECTION[4]
 										}
 										# Ascertain the name and URL parts of the PRINT_CHANNEL.
 										split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
