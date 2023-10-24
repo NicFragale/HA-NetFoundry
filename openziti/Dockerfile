@@ -24,8 +24,8 @@ RUN set -x \
 	&& apk update \
 	&& apk add --no-cache sudo sed iproute2 cmake build-base \
 	libatomic zlib-dev linux-headers gawk rsyslog git jq \
-	libuv-dev unzip zip openssl-dev doxygen libsodium-dev \
-	nginx php-fpm socat
+	libuv-dev unzip zip doxygen libsodium-dev \
+	nginx php-fpm socat ninja llhttp-dev mbedtls-dev
 
 # Setup NGINX.
 RUN set -x \
@@ -40,8 +40,16 @@ RUN set -x \
 
 # Build and setup NetFoundry OpenZITI.
 RUN set -x \
-	&& mkdir -vp /opt/NetFoundry/build \
-	&& cd /opt/NetFoundry/build \
+	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
+	&& export CMAKE_PRESET="ci-linux-x64" \
+	&& export VCPKG_ROOT="/opt/NetFoundry/vcpkg" \
+	&& export ZITI_ROOT="/opt/NetFoundry/build" \
+	&& mkdir -vp "${VCPKG_ROOT}" \
+	&& cd "/opt/NetFoundry" \
+	&& git clone "https://github.com/microsoft/vcpkg" "${VCPKG_ROOT}" \
+	&& ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics \
+	&& mkdir -vp "${ZITI_ROOT}" \
+	&& cd "${ZITI_ROOT}" \
 	&& ZTVERSION="$(\
 	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
 	| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
@@ -51,15 +59,23 @@ RUN set -x \
 	"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
 	&& unzip v${ZTVERSION}.zip \
 	&& cd ziti-tunnel-sdk-c-${ZTVERSION} \
-	&& cmake -DGIT_VERSION=${ZTVERSION} -DUSE_OPENSSL=on -DHAVE_LIBUV=on -DHAVE_LIBSODIUM=on -DDISABLE_LIBSYSTEMD_FEATURE=ON -B../ \
-	&& sed -i 's|/tmp/ziti-edge-tunnel.sock|/share/ziti-edge-tunnel.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
-	&& sed -i 's|/tmp/ziti-edge-tunnel-event.sock|/share/ziti-edge-tunnel-event.sock|' programs/ziti-edge-tunnel/ziti-edge-tunnel.c \
-	&& sed -i '/# if ! __GNUC_PREREQ(4,9)/,+2d' ../_deps/ziti-sdk-c-src/inc_internal/metrics.h \
-	&& sed -i 's|-luv_a|-luv|' /opt/NetFoundry/build/programs/ziti-edge-tunnel/CMakeFiles/ziti-edge-tunnel.dir/link.txt \
+	&& sed -i  's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' toolchains/Linux-arm64.cmake \
+	&& cmake \
+		--fresh \
+		-DGIT_VERSION=${ZTVERSION} \
+		-DTLSUV_TLSLIB=mbedtls \
+		-DUSE_MBEDTLS=ON \
+		-DHAVE_LIBSODIUM=ON \
+		-DDISABLE_LIBSYSTEMD_FEATURE=ON \
+		--preset "${CMAKE_PRESET:-ci-linux-x64}" \
+				-DCMAKE_BUILD_TYPE="${CMAKE_CONFIG:-Release}" \
+				-DBUILD_DIST_PACKAGES="${BUILD_DIST_PACKAGES:-OFF}" \
+				-DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
+		-B../ \
 	&& cd /opt/NetFoundry/ \
 	&& cmake --build ./build --target ziti-edge-tunnel \
-	&& mv -vf build/programs/ziti-edge-tunnel/ziti-edge-tunnel . \
-	&& rm -rf build \
+	&& mv -vf build/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
+	&& rm -rf build vcpkg \
 	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.

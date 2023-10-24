@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Major update to newest OpenZITI tunnel (C-SDK).
+
 ## 1.2.3
 
 - Bug fixes and enhancements to the look and feel of the ingress system.

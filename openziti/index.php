@@ -16,6 +16,7 @@
                 font-size: 1.5vmin;
             }
             hr {margin: 0;}
+            pre {margin: 0; display: inline;}
             #BODYIMG {
                 background: url(images/logo.png) no-repeat center center fixed;
                 min-height: 100%;
@@ -96,6 +97,7 @@
 
             // Update ZET information on the page.
             function UpdateZETInfo() {
+                console.log("WITHIN_C");
                 waitInt = 0;
                 if ($("#ZETLOADSTATUS").hasClass("NOTVISIBLE")) {
                     flagPause = "UNSET";
@@ -140,6 +142,7 @@
                                         $("#ZETLOADSTATUS").toggleClass("NOTVISIBLE");
                                     });
                                 });
+                                console.log("SENT_A");
                             }, 8000);
                         });
                     }
@@ -148,6 +151,7 @@
                 // Setup click and interval based actions.
                 setInterval(function() {
                     UpdatePageColors();
+                    console.log("SENT_B");
                 }, 30000);
                 setInterval(function() {
                     if ($("#ZETLOADSTATUS").is(":visible")) {
@@ -157,6 +161,7 @@
                         $("#OPENZITITEXT").slideUp();
                     }
                     UpdateZETInfo();
+                    console.log("SENT_C");
                 }, 8000);
             });
         </script>

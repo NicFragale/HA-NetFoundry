@@ -1,19 +1,19 @@
 name: "NetFoundry OpenZITI"
 description: "Zero Trust Application Specific Networking"
-version: "1.2.3"
+version: "1.3.0"
 slug: "openziti"
+# To build locally on your platform, comment "image" and "url" out.
 url: "https://github.com/openziti"
-# To build locally on your platform, comment "image" out.
 image: "nfragale/openziti-{arch}"
 codenotary: "nicfragale+cas@gmail.com"
 startup: services
 init: false
 arch:
-  - aarch64
-  - amd64
-  - armhf
-  - armv7
-  - i386
+ - aarch64
+ - amd64
+ - armhf
+ - armv7
+ - i386
 panel_icon: mdi:lightning-bolt-circle
 panel_title: "OpenZITI"
 ingress: true
