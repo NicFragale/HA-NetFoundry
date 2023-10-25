@@ -64,7 +64,7 @@ ENROLLMENTJWT="${5}"
 ENROLLSTRING="enroll -j <(echo \"${5}\") -i \"${1}/${6}\""
 RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
 SCRIPTDIRECTORY="/opt/NetFoundry/scripts"
-ASSISTAPPBINARIES=("nginx" "php-fpm8")
+ASSISTAPPBINARIES=("nginx" "php-fpm81")
 ASSISTAPPOPTS=("" "")
 
 bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
