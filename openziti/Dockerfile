@@ -40,16 +40,15 @@ RUN set -x \
 
 # Build and setup NetFoundry OpenZITI.
 RUN set -x \
-	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
 	&& export CMAKE_PRESET="ci-linux-x64" \
+	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
 	&& export ZITI_ROOT="/opt/NetFoundry" \
-	&& export ZITIBUILD_ROOT="/opt/NetFoundry/build" \
-	&& export VCPKG_ROOT="/${ZITI_ROOT}/vcpkg" \
-	&& mkdir -vp "${VCPKG_ROOT}" \
+	&& export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
+	&& export VCPKG_ROOT="${ZITI_ROOT}/vcpkg" \
+	&& mkdir -vp "${VCPKG_ROOT}" "${ZITI_ROOT}" "${ZITIBUILD_ROOT}" \
 	&& cd "${ZITI_ROOT}" \
 	&& git clone "https://github.com/microsoft/vcpkg" "${VCPKG_ROOT}" \
-	&& ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics \
-	&& mkdir -vp "${ZITIBUILD_ROOT}" \
+	&& "${VCPKG_ROOT}"/bootstrap-vcpkg.sh -disableMetrics \
 	&& cd "${ZITI_ROOT}" \
 	&& ZTVERSION="$(\
 	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
@@ -60,7 +59,7 @@ RUN set -x \
 	"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
 	&& unzip v${ZTVERSION}.zip \
 	&& cd ziti-tunnel-sdk-c-${ZTVERSION} \
-	&& sed -i  's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' toolchains/Linux-arm64.cmake \
+	&& sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' toolchains/Linux-arm64.cmake \
 	&& cmake \
 		--fresh \
 		-DGIT_VERSION=${ZTVERSION} \
@@ -72,7 +71,7 @@ RUN set -x \
 				-DCMAKE_BUILD_TYPE="Release" \
 				-DBUILD_DIST_PACKAGES="OFF" \
 				-DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
-		-B../ \
+		-B ${ZITIBUILD_ROOT} \
 	&& cd ${ZITI_ROOT} \
 	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
 	&& mv -vf ${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \

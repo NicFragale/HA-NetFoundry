@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Fixes errors presented in previous update.
+
 ## 1.3.0
 
 - Major update to newest OpenZITI tunnel (C-SDK).
