@@ -42,13 +42,14 @@ RUN set -x \
 RUN set -x \
 	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
 	&& export CMAKE_PRESET="ci-linux-x64" \
-	&& export VCPKG_ROOT="/opt/NetFoundry/vcpkg" \
-	&& export ZITI_ROOT="/opt/NetFoundry/build" \
+	&& export ZITI_ROOT="/opt/NetFoundry" \
+	&& export ZITIBUILD_ROOT="/opt/NetFoundry/build" \
+	&& export VCPKG_ROOT="/${ZITI_ROOT}/vcpkg" \
 	&& mkdir -vp "${VCPKG_ROOT}" \
-	&& cd "/opt/NetFoundry" \
+	&& cd "${ZITI_ROOT}" \
 	&& git clone "https://github.com/microsoft/vcpkg" "${VCPKG_ROOT}" \
 	&& ${VCPKG_ROOT}/bootstrap-vcpkg.sh -disableMetrics \
-	&& mkdir -vp "${ZITI_ROOT}" \
+	&& mkdir -vp "${ZITIBUILD_ROOT}" \
 	&& cd "${ZITI_ROOT}" \
 	&& ZTVERSION="$(\
 	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
@@ -68,14 +69,14 @@ RUN set -x \
 		-DHAVE_LIBSODIUM=ON \
 		-DDISABLE_LIBSYSTEMD_FEATURE=ON \
 		--preset "${CMAKE_PRESET:-ci-linux-x64}" \
-				-DCMAKE_BUILD_TYPE="${CMAKE_CONFIG:-Release}" \
-				-DBUILD_DIST_PACKAGES="${BUILD_DIST_PACKAGES:-OFF}" \
+				-DCMAKE_BUILD_TYPE="Release" \
+				-DBUILD_DIST_PACKAGES="OFF" \
 				-DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
 		-B../ \
-	&& cd /opt/NetFoundry/ \
-	&& cmake --build ./build --target ziti-edge-tunnel \
-	&& mv -vf build/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
-	&& rm -rf build vcpkg \
+	&& cd ${ZITI_ROOT} \
+	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
+	&& mv -vf ${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
+	&& rm -rf ${ZITIBUILD_ROOT} ${VCPKG_ROOT} \
 	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.
