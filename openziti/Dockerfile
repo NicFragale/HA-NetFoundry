@@ -40,7 +40,10 @@ RUN set -x \
 
 # Build and setup NetFoundry OpenZITI.
 RUN set -x \
-	&& export CMAKE_PRESET="ci-linux-x64" \
+	&& export CMAKE_PRESET="$(\
+		[[ $(arch) == \"arm64\" ]] \
+			&& echo \"ci-linux-arm64\" \
+			|| echo)" \
 	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
 	&& export ZITI_ROOT="/opt/NetFoundry" \
 	&& export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
@@ -51,10 +54,10 @@ RUN set -x \
 	&& "${VCPKG_ROOT}"/bootstrap-vcpkg.sh -disableMetrics \
 	&& cd "${ZITI_ROOT}" \
 	&& ZTVERSION="$(\
-	curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
-	| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
-	| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
-	| head -n1)" \
+		curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' \
+		| awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' \
+		| sort -rnt '.' -k1,1 -k2,2 -k3,3 \
+		| head -n1)" \
 	&& curl -Lso "v${ZTVERSION}.zip" \
 	"https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip" \
 	&& unzip v${ZTVERSION}.zip \
@@ -67,10 +70,11 @@ RUN set -x \
 		-DUSE_MBEDTLS=ON \
 		-DHAVE_LIBSODIUM=ON \
 		-DDISABLE_LIBSYSTEMD_FEATURE=ON \
+		-DVCPKG_BUILD_TYPE="release" \
 		--preset "${CMAKE_PRESET:-ci-linux-x64}" \
-				-DCMAKE_BUILD_TYPE="Release" \
-				-DBUILD_DIST_PACKAGES="OFF" \
-				-DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
+			-DCMAKE_BUILD_TYPE="Release" \
+			-DBUILD_DIST_PACKAGES="OFF" \
+			-DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
 		-B ${ZITIBUILD_ROOT} \
 	&& cd ${ZITI_ROOT} \
 	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
