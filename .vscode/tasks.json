@@ -1,19 +1,23 @@
 {
   "version": "2.0.0",
+  "command": "bash",
+  "args": [
+      "-c"
+  ],
   "tasks": [
     {
-      "label": "Start Home Assistant",
-      "type": "shell",
-      "command": "supervisor_run",
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
+        "label": "Start Home Assistant",
+        "type": "shell",
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": [],
+        "args": ["bash <(sed \"s|homeassistant|ghcr.io/home-assistant|\" /usr/bin/supervisor_run)"]
     }
   ]
 }
