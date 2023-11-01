@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2
+
+- Updates to the display system.
+
 ## 1.3.1
 
 - Fixes errors presented in previous update.

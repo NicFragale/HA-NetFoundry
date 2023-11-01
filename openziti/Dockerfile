@@ -79,7 +79,7 @@ RUN set -x \
 	&& cd ${ZITI_ROOT} \
 	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
 	&& mv -vf ${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
-	&& rm -rf ${ZITIBUILD_ROOT} ${VCPKG_ROOT} \
+	&& rm -rf v${ZTVERSION}.zip ziti-tunnel-sdk-c-${ZTVERSION} ${ZITIBUILD_ROOT} ${VCPKG_ROOT} \
 	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.

@@ -122,7 +122,9 @@ function ZET_Status() {
 							SERVICE_BINDREPORT[++INCRB]=SERVICE_IDENTITY","SERVICE_TYPE","SERVICE_NAME","SERVICE_CLIENTFULLHOST","SERVICE_SERVERFULLHOST
 						}
 					} else if (SAVE_SWITCHING == "CONNECTIONS" ) {
-						CONNECTION_REPORT[++CONNECTION_COUNTER]=CONNECTION_NUMBER","CONNECTION_SERVICENAME","CONNECTION_CHANNELROUTER","toupper(CONNECTION_STATE)
+						CONNECTION_REPORT[++CONNECTION_COUNTER]=CONNECTION_NUMBER","CONNECTION_SERVICENAME","CONNECTION_TERMINATORS
+					} else if (SAVE_SWITCHING == "CHILDREN" ) {
+						CHILDREN_REPORT[++CHILD_COUNTER]=CONNECTION_CHILDTOCONNECTIONNUMBER","CONNECTION_CHILDNUMBER","toupper(CONNECTION_CHILDSTATE)","CONNECTION_CHILDCALLERID","CONNECTION_CHILDCHANNELROUTER
 					} else if (SAVE_SWITCHING == "CHANNELS" ) {
 						CHANNEL_REPORT[++CHANNEL_COUNTER]=CHANNEL_NUMBER","CHANNEL_ROUTER","toupper(CHANNEL_STATE)","CHANNEL_LATENCY
 					} else if (SAVE_SWITCHING == "NETSESSIONS" ) {
@@ -140,6 +142,7 @@ function ZET_Status() {
 					} else if (a == "NETSESSIONS") {
 					} else if (a == "CHANNELS") {
 					} else if (a == "CONNECTIONS") {
+					} else if (a == "CHILDREN") {
 					}
 					return b
 				}
@@ -151,10 +154,7 @@ function ZET_Status() {
 					CHILD_COUNTER=0
 					CHANNEL_COUNTER=0
 					NETSESSION_COUNTER=0
-					CONNECTION_ORPHANCOUNTER=0
 					CHANNEL_ORPHANCOUNTER=0
-					EACH_CONNECTIONORPHANCOUNTER=0
-					delete CONNECTION_ORPHANS[0]
 				}
 
 				{
@@ -197,8 +197,7 @@ function ZET_Status() {
 						SERVICE_NAME=gensub(/(.*):.*/,"\\1","1")
 						SERVICE_IDENTITY=gensub(/.*\[(.*)\].*/,"\\1","1")
 
-					} else if (/\[host.v1\]/) {
-
+					} else if (/\[host.v.\]/) {
 						if (/\"allowedAddresses\"/) {
 							SERVICE_SERVERHOST=gensub(/.*\"allowedAddresses\":(\[[^,]+)[^\]]+,.*/,"\\1","1")
 						} else {
@@ -302,24 +301,25 @@ function ZET_Status() {
 					# CONNECTIONS SECTION #
 					} else if (/conn\[.*\]/) {
 
-						CONNECTION_NUMBER=gensub(/^(conn\[.*\]): .*/,"\\1","1")
-						CONNECTION_SERVICENAME=gensub(/.*service\[(.*)\] using.*/,"\\1","1")
-						CONNECTION_CHANNELROUTER=gensub(/.*ch\[.*\] (.*)/,"\\1","1")
-						CONNECTION_STATE=gensub(/.*state\[(.*)\] service.*/,"\\1","1")
+						CONNECTION_NUMBER=gensub(/^conn\[(.*)\]: .*/,"\\1","1")
+						CONNECTION_SERVICENAME=gensub(/.*service\[(.*)\] .*/,"\\1","1")
+						CONNECTION_TERMINATORS=gensub(/.*terminators\[(.*)\]/,"\\1","1")
 						READYSAVE("CONNECTIONS")
 
 					# CONNECTIONS/CHILDREN SUBSECTION #
 					} else if (/child\[.*\]/) {
 
 						CONNECTION_CHILDTOCONNECTIONNUMBER=CONNECTION_NUMBER
-						CONNECTION_CHILDNUMBER=gensub(/^(conn\[.*\]): .*/,"\\1","1")
-						CONNECTION_CHILDSTATE=gensub(/.*state\[(.*)\] service.*/,"\\1","1")
-						CONNECTION_CHILDCALLERID=gensub(/.*caller_id\[(.*)\]/,"\\1","1")
+						CONNECTION_CHILDNUMBER=gensub(/.*child\[(.*)\]:.*/,"\\1","1")
+						CONNECTION_CHILDSTATE=gensub(/.*state\[(.*)\] caller_id.*/,"\\1","1")
+						CONNECTION_CHILDCALLERID=gensub(/.*caller_id\[(.*)\] ch.*/,"\\1","1")
+						CONNECTION_CHILDCHANNELROUTER=gensub(/.*ch\[(.*)\] .*/,"\\1","1")
+						READYSAVE("CHILDREN")
 
 					# CHANNELS SECTION #
 					} else if (/ch\[.*\]/) {
 
-						CHANNEL_NUMBER=gensub(/^(ch\[.*\])\(.*/,"\\1","1")
+						CHANNEL_NUMBER=gensub(/^ch\[(.*)\]\(.*/,"\\1","1")
 						CHANNEL_ROUTER=gensub(/ch\[.*\]\((.*)\).*/,"\\1","1")
 						if (match($0,"latency")) {
 							CHANNEL_STATE=gensub(/.*\) (.*) \[.*/,"\\1","1")
@@ -434,129 +434,106 @@ function ZET_Status() {
 						# For every SERVICE, loop all CONNECTIONS.
 						for (EACH_CONNECTION in CONNECTION_REPORT) {
 
-							# CONNECTIONS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELROUTER,[4]=STATE
+							# CONNECTIONS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELTERMINATORS
 							split(CONNECTION_REPORT[EACH_CONNECTION],PRINT_CONNECTION,",")
+
 							# Match CONNECTION_SERVICENAME to current SERVICE_NAME.
 							if (PRINT_SERVICE[3] == PRINT_CONNECTION[2]) {
 
-								# For every CONNECTION, loop all CHANNELS.
-								for (EACH_CHANNEL in CHANNEL_REPORT) {
+								PRINTLINE("DOUBLELBR","NONE","NONE"," ","TERMINATORS",PRINT_CONNECTION[3])
 
-									# CHANNELS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-									split(CHANNEL_REPORT[EACH_CHANNEL],PRINT_CHANNEL,",")
+								# For every CONNECTION, loop all CHILDREN.
+								for (EACH_CHILD in CHILDREN_REPORT) {
 
-									if (PRINT_CHANNEL[3] != "CONNECTED") {
-										CHANNEL_ORPHANSEMAPHORE="FALSE"
-										for (EACH_ORPHAN in CHANNEL_ORPHANS) {
-											# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-											split(CHANNEL_ORPHANS[EACH_ORPHAN],CHECK_CHANNELORPHAN,",")
-											# Match the CHANNELORPHAN_NUMBER to the current CHANNEL_NUMBER.
-											if (CHECK_CHANNELORPHAN[1] == PRINT_CHANNEL[1]) {
-												CHANNEL_ORPHANSEMAPHORE="TRUE"
-												CHANNEL_ORPHANS_PRESENT="1"
-												break
+									# CHILDREN # [1]=CHILDCONNECTIONNUMBER,[2]=CHILDNUMBER,[3]=CHILDSTATE,[4]=CHILDCALLERID,[5]=CHILDCHANNELROUTER
+									split(CHILDREN_REPORT[EACH_CHILD],PRINT_CHILD,",")
+
+									# Match CHILD_CONNECTIONNUMBER to current CONNECTION_NUMBER.
+									if (PRINT_CHILD[1] == PRINT_CONNECTION[1]) {
+
+										# For every matched CHILD, loop all CHANNELS.
+										for (EACH_CHANNEL in CHANNEL_REPORT) {
+
+											# CHANNELS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
+											split(CHANNEL_REPORT[EACH_CHANNEL],PRINT_CHANNEL,",")
+
+											# Add the CHANNEL to the orphan list if its not connected.
+											if (PRINT_CHANNEL[3] != "CONNECTED") {
+												CHANNEL_ORPHANSEMAPHORE="FALSE"
+												for (EACH_ORPHAN in CHANNEL_ORPHANS) {
+													# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
+													split(CHANNEL_ORPHANS[EACH_ORPHAN],CHECK_CHANNELORPHAN,",")
+													# Match the CHANNELORPHAN_NUMBER to the current CHANNEL_NUMBER.
+													if (CHECK_CHANNELORPHAN[1] == PRINT_CHANNEL[1]) {
+														CHANNEL_ORPHANSEMAPHORE="TRUE"
+														CHANNEL_ORPHANS_PRESENT="1"
+														break
+													}
+												}
+												if (CHANNEL_ORPHANSEMAPHORE == "FALSE")
+													CHANNEL_ORPHANS[++CHANNEL_ORPHANCOUNTER]=PRINT_CHANNEL[1]","PRINT_CHANNEL[2]","PRINT_CHANNEL[3]","PRINT_CHANNEL[4]
 											}
-										}
-										if (CHANNEL_ORPHANSEMAPHORE == "FALSE")
-											CHANNEL_ORPHANS[++CHANNEL_ORPHANCOUNTER]=PRINT_CHANNEL[1]","PRINT_CHANNEL[2]","PRINT_CHANNEL[3]","PRINT_CHANNEL[4]
-									}
 
-									# Match the CHANNEL_ROUTER to the current CONNECTION_CHANNELROUTER or if not assigned.
-									if (PRINT_CONNECTION[3] == PRINT_CHANNEL[2] || PRINT_CONNECTION[3] == "(none)" ) {
+											# Match the CHANNEL_ROUTER to the current CHILD_CHANNELROUTER or if not assigned.
+											if (PRINT_CHILD[5] == PRINT_CHANNEL[1] || PRINT_CHILD[5] == "(none)" ) {
+												# Emphasize latency if above threshold.
+												if (PRINT_CHANNEL[4] < 50) {
+													PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"ms</span>"
+												} else if (PRINT_CHANNEL[4] < 100) {
+													PRINT_CHANNEL[4]="<span class=\"FG-BLACK BG-YELLOW\">"PRINT_CHANNEL[4]"ms</span>"
+												} else {
+													PRINT_CHANNEL[4]="<span class=\"FG-WHITE BG-RED\">"PRINT_CHANNEL[4]"ms</span>"
+												}
 
-										# Emphasize latency if above threshold.
-										if (PRINT_CHANNEL[4] < 50) {
-											PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"ms</span>"
-										} else if (PRINT_CHANNEL[4] < 100) {
-											PRINT_CHANNEL[4]="<span class=\"FG-BLACK BG-YELLOW\">"PRINT_CHANNEL[4]"ms</span>"
-										} else {
-											PRINT_CHANNEL[4]="<span class=\"FG-WHITE BG-RED\">"PRINT_CHANNEL[4]"ms</span>"
-										}
+												# Match the CONNECTION_STATE, and print the information.
+												split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
+												if (PRINT_CHILD[3] == "CONNECTED" || PRINT_CHILD[3] == "ACCEPTING") {
+													PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+												} else if (PRINT_CHILD[3] == "DISCONNECTED" || PRINT_CHILD[3] == "TIMEDOUT") {
+													PRINTLINE("BRANCHNORMAL","WHITE","RED",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+												} else {
+													PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+												}
+												PRINTLINE("DOUBLELBR","NONE","NONE"," ","CHANNEL",PRINT_CHANNELPARTS[1])
+												PRINTLINE("DOUBLELBR","NONE","NONE"," ","AT",PRINT_CHANNELPARTS[2])
+												PRINTLINE("DOUBLELBR","NONE","NONE"," ","LATENCY",PRINT_CHANNEL[4])
+												break
 
-										# Match the CONNECTION_STATE, and print the information.
-										split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
-										if (PRINT_CONNECTION[4] == "BOUND" || PRINT_CONNECTION[4] == "CONNECTED") {
-											PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CONNECTION[4],"CHANNEL",PRINT_CHANNELPARTS[1])
-										} else {
-											PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CONNECTION[4],"CHANNEL",PRINT_CHANNELPARTS[1])
+											}
+
 										}
-										PRINTLINE("DOUBLELBR","NONE","NONE"," ","AT",PRINT_CHANNELPARTS[2])
-										PRINTLINE("DOUBLELBR","NONE","NONE"," ","LATENCY",PRINT_CHANNEL[4])
-										break
 
 									}
 
 								}
 
-							break
-
-							} else if (PRINT_CONNECTION[4] != "BOUND" && PRINT_CONNECTION[4] != "CONNECTED" && PRINT_CONNECTION[4] != "CONNECTING") {
-
-								CONNECTION_ORPHANSEMAPHORE="FALSE"
-								for (EACH_ORPHAN in CONNECTION_ORPHANS) {
-									# CONNECTION ORPHANS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELROUTER,[4]=STATE
-									split(CONNECTION_ORPHANS[EACH_ORPHAN],CHECK_CONNECTIONORPHAN,",")
-									# Match the CONNECTIONORPHAN_NUMBER to the current CONNECTION_NUMBER -OR- if CONNECTION_CHANNELROUTER is NULL/NONE.
-									if (CHECK_CONNECTIONORPHAN[1] == PRINT_CONNECTION[1] || PRINT_CONNECTION[3] == "(null)" || PRINT_CONNECTION[3] == "(none)") {
-										CONNECTION_ORPHANSEMAPHORE="TRUE"
-										CONNECTION_ORPHANS_PRESENT="1"
-									}
-								}
-								if (CONNECTION_ORPHANSEMAPHORE == "FALSE")
-									CONNECTION_ORPHANS[++CONNECTION_ORPHANCOUNTER]=PRINT_CONNECTION[1]","PRINT_CONNECTION[2]","PRINT_CONNECTION[3]","PRINT_CONNECTION[4]
+								break
 
 							}
 
 						}
 
-						PRINTLINE("FINAL",SERVICE_EGRESSTYPE_COLORFG,SERVICE_EGRESSTYPE_COLORBG,"EGRESS","TERMINATES",PRINT_SERVICE[5])
+						PRINTLINE("FINAL",SERVICE_EGRESSTYPE_COLORFG,SERVICE_EGRESSTYPE_COLORBG,"EGRESS","HOSTS",PRINT_SERVICE[5])
 					}
+
+					PRINTLINE("SINGLELBR")
 
 					for (EACH_CHANNELORPHAN in CHANNEL_ORPHANS) {
 
 						# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
 						split(CHANNEL_ORPHANS[EACH_CHANNELORPHAN],PRINT_ORPHAN,",")
-						printf "\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┃</span>\
-							</span><br>\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┣┳</span><span>%04d/CHANNEL_ORPHAN/%s</span>\
-							</span><br>\
-								<span class=\"ZETDETAILLINE FULLWIDTH\"><span class=\"FG-GREEN\">┃┗━</span><span class=\"FG-WHITE BG-RED\">%s</span><span> Channel State Error for [%s]</span>\
-							</span><br>\
-						",++EACH_CHANNELORPHANCOUNTER,PRINT_ORPHAN[1],PRINT_ORPHAN[3],PRINT_ORPHAN[2]
+						split(PRINT_ORPHAN[2],PRINT_ORPHANPARTS,"@")
+						PRINTLINE("INITIAL","NONE","NONE",sprintf("%04d",++EACH_CHANNELORPHANCOUNTER),"CHAN_ORPHAN",PRINT_ORPHANPARTS[1])
+						PRINTLINE("FINAL","WHITE","RED",PRINT_ORPHAN[3],"FROM",PRINT_ORPHANPARTS[2])
 
-					}
-
-					for (EACH_CONNECTIONORPHAN in CONNECTION_ORPHANS) {
-
-						# CONNECTION ORPHANS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELROUTER,[4]=STATE
-						split(CONNECTION_ORPHANS[EACH_CONNECTIONORPHAN],PRINT_ORPHAN,",")
-						printf "\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┃</span>\
-							</span><br>\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┣┳</span><span>%04d/CONNECTION_ORPHAN/%s</span>\
-							</span><br>\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┃┗━</span><span class=\"FG-WHITE BG-RED\">%s</span><span class=\"FG-ITALIC\"> service </span><span>[%s]</span>\
-							</span><br>\
-							<span class=\"ZETDETAILLINE FULLWIDTH\">\
-								<span class=\"FG-GREEN\">┃&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class=\"FG-ITALIC\"> channel </span><span>[%s]</span>\
-							</span><br>\
-						",++EACH_CONNECTIONORPHANCOUNTER,PRINT_ORPHAN[1],PRINT_ORPHAN[4],PRINT_ORPHAN[2],PRINT_ORPHAN[3]
 					}
 
 					# Final printing line.
-					#if (ZITICONTEXT_COUNTER == ZITICONTEXT_COUNTEREND) {
-						PRINTLINE("SINGLELBR")
-						PRINTLINE("TAIL","GREEN","NONE",sprintf("%02d/%s/%s",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]))
-					#} else {
-					#}
+					PRINTLINE("SINGLELBR")
+					PRINTLINE("TAIL","GREEN","NONE",sprintf("%02d/%s/%s",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]))
 
 				}
+
 			' "${ZETResults[${i}]}" ||
 				printf "<span class=\"FG-WHITE BG-RED\">%s</span></span><br>" "ERROR: Parsing (AWK) failed. Please report this!"
 
