@@ -237,8 +237,8 @@ function GetContainerNetworking() {
 # EOFEOFEOFOEFEOFEOFEOFOEFEOFEOFEOFOEFEOFEOFEOFOEFEOFEOFEOFOEFEOFEOFEOFOEFEOFEOFEOFOEF
 #######################################################################################
 
-# IPTABLES to block the Insteon from communicating to DNS.
-# iptables -I PREROUTING -t raw -i eth1 -d 10.20.100.1 -p tcp --dport 53 -j DRO
-# iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
-# iptables -A FORWARD -i eth1 -o eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT
-# iptables -A POSTROUTING -t nat -o eth0 -j MASQUERADE
+# IPTABLES to handle the Insteon behind the unit.
+#iptables -I PREROUTING -t raw -i enp1s0u2 -p udp --dport 53 -j DROP
+#iptables -A FORWARD -i enp1s0u2 -o end0 -j ACCEPT
+#iptables -A FORWARD -i enp1s0u2 -o end0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+#iptables -A POSTROUTING -t nat -i enp1s0u2 -o end0 -j MASQUERADE

@@ -97,7 +97,7 @@
 
             // Update ZET information on the page.
             function UpdateZETInfo() {
-                console.log("WITHIN_C");
+                //console.log("WITHIN_C");
                 waitInt = 0;
                 if ($("#ZETLOADSTATUS").hasClass("NOTVISIBLE")) {
                     flagPause = "UNSET";
@@ -151,7 +151,7 @@
                 // Setup click and interval based actions.
                 setInterval(function() {
                     UpdatePageColors();
-                    console.log("SENT_B");
+                    //console.log("SENT_B");
                 }, 30000);
                 setInterval(function() {
                     if ($("#ZETLOADSTATUS").is(":visible")) {
@@ -161,7 +161,7 @@
                         $("#OPENZITITEXT").slideUp();
                     }
                     UpdateZETInfo();
-                    console.log("SENT_C");
+                    //console.log("SENT_C");
                 }, 8000);
             });
         </script>
