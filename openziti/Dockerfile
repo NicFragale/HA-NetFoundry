@@ -23,15 +23,12 @@ LABEL \
 RUN set -x \
 	&& apk update \
 	&& apk add --no-cache sudo sed iproute2 cmake build-base \
-	libatomic zlib-dev linux-headers gawk rsyslog git jq \
-	libuv-dev unzip zip doxygen libsodium-dev \
-	nginx php-fpm socat ninja llhttp-dev mbedtls-dev
+	gawk git jq socat nginx php-fpm ninja zip unzip curl git \
+	libuv-dev zlib-dev linux-headers
 
 # Setup NGINX.
 RUN set -x \
-	&& mkdir -vp /var/run/nginx \
-	&& mkdir -vp /var/run/php \
-	&& mkdir -vp /var/www/html/images \
+	&& mkdir -vp '/var/run/nginx' '/var/run/php' '/var/www/html/images' \
 	&& sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
 	-e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
 	-e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
@@ -70,7 +67,6 @@ RUN set -x \
 		-DUSE_MBEDTLS=ON \
 		-DHAVE_LIBSODIUM=ON \
 		-DDISABLE_LIBSYSTEMD_FEATURE=ON \
-		-DVCPKG_BUILD_TYPE="release" \
 		--preset "${CMAKE_PRESET:-ci-linux-x64}" \
 			-DCMAKE_BUILD_TYPE="Release" \
 			-DBUILD_DIST_PACKAGES="OFF" \
@@ -80,7 +76,7 @@ RUN set -x \
 	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
 	&& mv -vf ${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
 	&& rm -rf v${ZTVERSION}.zip ziti-tunnel-sdk-c-${ZTVERSION} ${ZITIBUILD_ROOT} ${VCPKG_ROOT} \
-	&& echo 'ziti:x:99:' >> /etc/group
+	&& echo 'ziti:x:99:' >> /etc/group 
 
 # Add the Home Assistant CLI.
 RUN set -x \

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.3
+
+- Fixes a few things that got messed up due to how git was being handled.
+
 ## 1.3.2
 
 - Updates to the display system.
