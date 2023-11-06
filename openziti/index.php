@@ -54,6 +54,7 @@
             .FG-GREEN {color: green;}
             .FG-BLUE {color: blue;}
             .FG-PURPLE {color: purple;}
+            [class*="BG-"] {border-radius: 3px;}
             .BG-GREY {background-color: grey;}
             .BG-LTGREY {background-color: lightgrey;}
             .BG-WHITE {background-color: white;}
