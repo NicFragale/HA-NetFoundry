@@ -57,11 +57,12 @@ function ObtainIPInfo() {
 ####################################################################################################
 # 1/IDENTITYDIRECTORY, 2/RESOLUTIONRANGE, 3/UPSTREAMRESOLVER, 4/LOGLEVEL, 5/JWTSTRING, 6/IDENTITYOUT
 IDENTITYDIRECTORY="${1:-/share/NetFoundry/identities}"
-RESOLUTIONRANGE="${2}"
-UPSTREAMRESOLVER="${3}"
-LOGLEVEL="${4}"
-ENROLLMENTJWT="${5}"
-ENROLLSTRING="enroll -j <(echo \"${5}\") -i \"${1}/${6}\""
+RESOLUTIONRANGE="${2:-100.64.64.0/18}"
+UPSTREAMRESOLVER="${3:-1.1.1.1}"
+LOGLEVEL="${4:-3}"
+ENROLLMENTJWT="${5:-UNSET}"
+IDENTITYOUT="${6:-UNSET}"
+ENROLLSTRING="echo \"${ENROLLMENTJWT}\" | enroll -j \"-\" -i \"${IDENTITYDIRECTORY}/${IDENTITYOUT}\""
 RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
 SCRIPTDIRECTORY="/opt/NetFoundry/scripts"
 ASSISTAPPBINARIES=("nginx" "php-fpm81")

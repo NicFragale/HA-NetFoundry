@@ -20,7 +20,8 @@ NFZTLogo=(
     '            ██    ██ ██   ██ ██      ████   ██    ███  ██    ██    ██                  '
     '            ██    ██ ██████  █████   ██ ██  ██   ███   ██    ██    ██                  '
     '            ██    ██ ██      ██      ██  ██ ██  ███    ██    ██    ██                  '
-    '             ██████  ██      ███████ ██   ████ ███████ ██    ██    ██                  ')
+    '             ██████  ██      ███████ ██   ████ ███████ ██    ██    ██                  '
+    '                       BETA: THIS IS A WORK IN PROGRESS                                ')
 ZETVersion="$(/opt/NetFoundry/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
 
 if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
