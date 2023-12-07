@@ -60,7 +60,7 @@ RUN set -x \
     && unzip v${ZTVERSION}.zip \
     && cd ziti-tunnel-sdk-c-${ZTVERSION} \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' toolchains/Linux-arm64.cmake \
-    && sed -i 's/arm64/aarch64/' ../vcpkg/triplets/community/arm64-linux.cmake
+    && sed -i 's/arm64/aarch64/' ../vcpkg/triplets/community/arm64-linux.cmake \
     && cmake \
         --fresh \
         -DGIT_VERSION="${ZTVERSION}" \
