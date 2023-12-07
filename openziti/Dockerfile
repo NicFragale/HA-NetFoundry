@@ -38,7 +38,7 @@ RUN set -x \
 # Build and setup NetFoundry OpenZITI.
 RUN set -x \
 	&& export CMAKE_PRESET="$(\
-		[[ $(arch) == \"arm64\" ]] \
+		[[ $(arch) == \"aarch64\" ]] \
 			&& echo \"ci-linux-arm64\" \
 			|| echo)" \
 	&& export VCPKG_FORCE_SYSTEM_BINARIES=1 \
@@ -76,7 +76,7 @@ RUN set -x \
 	&& cmake --build ${ZITIBUILD_ROOT} --target ziti-edge-tunnel \
 	&& mv -vf ${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel . \
 	&& rm -rf v${ZTVERSION}.zip ziti-tunnel-sdk-c-${ZTVERSION} ${ZITIBUILD_ROOT} ${VCPKG_ROOT} \
-	&& echo 'ziti:x:99:' >> /etc/group 
+	&& echo 'ziti:x:99:' >> /etc/group
 
 # Add the Home Assistant CLI.
 RUN set -x \
