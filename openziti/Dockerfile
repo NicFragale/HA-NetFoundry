@@ -37,10 +37,10 @@ RUN set -x \
 
 # Build and setup NetFoundry OpenZITI.
 RUN set -x \
-    && export CMAKE_PRESET="$(\
-        [[ "$(arch)" == "aarch64" ]] \
-            && echo "ci-linux-arm64" \
-            || echo)" \
+    && MYARCH="$(arch)" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "aarch64" ]] && echo "ci-linux-arm64")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armv7l" ]] && echo "ci-linux-arm64")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
     && export VCPKG_FORCE_SYSTEM_BINARIES=1 \
     && export ZITI_ROOT="/opt/NetFoundry" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
@@ -61,6 +61,7 @@ RUN set -x \
     && cd ziti-tunnel-sdk-c-${ZTVERSION} \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' toolchains/Linux-arm64.cmake \
     && sed -i 's/arm64/aarch64/' ../vcpkg/triplets/community/arm64-linux.cmake \
+    && sed -i 's/arm/aarch64/' ../vcpkg/triplets/community/arm-linux.cmake \
     && cmake \
         --fresh \
         -DGIT_VERSION="${ZTVERSION}" \
