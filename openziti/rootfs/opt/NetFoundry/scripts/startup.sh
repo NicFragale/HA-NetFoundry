@@ -81,7 +81,7 @@ function StartAssistBinaries() {
 
 function PreCheck() {
     # Set permissions as required for normal operations.
-    chmod 700 -vR "${SCRIPTDIRECTORY}"
+    chmod 700 -R "${SCRIPTDIRECTORY}"
 
     # Check identities folder for validity and list available identities.
     if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp "${IDENTITYDIRECTORY}"; then
@@ -97,7 +97,6 @@ function RunEnrollment() {
     local ENROLLSTRING
     bashio::log.notice "ZITI EDGE TUNNEL - ENROLL BEGIN"
     ENROLLSTRING="enroll -j \"-\" -i \"${IDENTITYDIRECTORY}/ZTID-$(date +"%Y%m%d_%H%M%S").json\""
-    bashio::log.notice "${RUNTIME} ${ENROLLSTRING} <<< ${ENROLLJWT}"
     /bin/bash -c "${RUNTIME} ${ENROLLSTRING} <<< ${ENROLLJWT}" &
     ENROLLPID=$!
     CheckWait "ENROLL" "${ENROLLPID}" &
@@ -162,20 +161,6 @@ IdentityCheck "${IDENTITYDIRECTORY}"
 
 # Ensure existing configuration is saved for reinstallation later.
 bashio::log.info "ZITI_DNS_IP: ${ZITI_DNS_IP:-ERROR}"
-
-#[[ ! -f "/etc/resolv.conf.system" ]] \
-#	&& cat /etc/resolv.conf > /etc/resolv.conf.system
-#echo "# Created by OpenZITI Startup." > /etc/resolv.conf.ziti
-#NSERV="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
-#while IFS=$'\n' read -r EachLine; do
-#	if [[ ${NSSEMA:=FALSE} == "FALSE" ]] && [[ ${EachLine%% *} == "nameserver" ]]; then
-#		echo "nameserver ${NSERV}"
-#		NSSEMA="TRUE"
-#	else
-#		echo "${EachLine}"
-#	fi
-#done < /etc/resolv.conf >> /etc/resolv.conf.ziti
-#cat /etc/resolv.conf.ziti > /etc/resolv.conf
 
 # Set the system first resolver to ZITI.
 SetSystemResolver "${ZITI_DNS_IP}"
