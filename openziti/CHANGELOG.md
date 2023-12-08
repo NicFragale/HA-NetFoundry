@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.5
+
+- Fixes issues with enrollment.
+- Updates a few methods and functions in startup.
+
 ## 1.3.4
 
 - Addresses a problem with decoding a new identity (JWT).

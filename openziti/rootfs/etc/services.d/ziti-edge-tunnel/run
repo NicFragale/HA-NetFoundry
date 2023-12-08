@@ -41,4 +41,4 @@ bashio::log.info "  with LogLevel          \"${LogLevel}\"."
 [[ ${EnrollmentJWT} != "UNSET" ]] &&
         bashio::log.info "  with EnrollmentJWT     \"${EnrollmentJWT:0:10}...${EnrollmentJWT:0-10}\"."
 
-exec /opt/NetFoundry/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" "ZTID-$(date +"%Y%m%d_%H%M%S").json" </dev/null
+exec /opt/NetFoundry/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" </dev/null
