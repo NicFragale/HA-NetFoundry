@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.3
+## 1.3.4
 
 - Addresses a problem with decoding a new identity (JWT).
 - Updates the ZITI EDGE TUNNEL (v0.22.16) utilizing ZITI C SDK (v0.35.8).
