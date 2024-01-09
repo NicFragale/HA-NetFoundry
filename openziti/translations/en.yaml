@@ -4,7 +4,7 @@ configuration:
     name: Enrollment JWT
     description: >-
       [OPTIONAL]
-      The ASCII text output of the OpenZITI controller, file extension (.jwt) upon endpoint creation.  Place the text exactly from the file into this field.
+      The ASCII text output of the OpenZiti controller, file extension (.jwt) upon endpoint creation.  Place the text exactly from the file into this field.
       If not present (UNSET), will not attempt any enrollment proceedures during startup.
   IdentityDirectory:
     name: Identity Directory
@@ -12,7 +12,7 @@ configuration:
       [OPTIONAL]
       The directory that is used to place and refer to identities that have been created through the enrollment process.
       You normally should not have to modify this.
-      If not present, will default to (/share/NetFoundry/identities).
+      If not present, will default to (/share/openziti/identities).
   LogLevel:
     name: Log Level
     description: >-
@@ -23,11 +23,11 @@ configuration:
     name: Upstream Resolver
     description: >-
       [OPTIONAL]
-      Informs the ZITI EDGE TUNNEL runtime to utilize a specific IP as the resolver for any queries that it cannot natively resolve.
+      Informs the Ziti-Edge-Tunnel runtime to utilize a specific IP as the resolver for any queries that it cannot natively resolve.
       If not present, will use the default of the system from DHCP or static assignment or fallback to (1.1.1.1).
   ResolutionRange:
     name: Resolution Range
     description: >-
       [OPTIONAL]
-      Informs the ZITI EDGE TUNNEL runtime that it should utilize a specific range of IPs for internal redirection of assigned services.
+      Informs the Ziti-Edge-Tunnel runtime that it should utilize a specific range of IPs for internal redirection of assigned services.
       If not present, will default to (100.64.64.0/18).

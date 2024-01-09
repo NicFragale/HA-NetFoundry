@@ -2,35 +2,35 @@
 ####################################################################################################
 # 20230428 - Written by Nic Fragale @ NetFoundry.
 MyName="infodisplay.sh"
-MyPurpose="NetFoundry ZITI Edge Tunnel Host Information Display."
+MyPurpose="Ziti-Edge-Tunnel Host Information Display."
 ####################################################################################################
 #set -e -u -o pipefail
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
     bashio::log.info "MyName: ${MyName}" &&
     bashio::log.info "MyPurpose: ${MyPurpose}"
 
-NFZTLogo=(
-    '███    ██ ███████ ████████ ███████  ██████  ██    ██ ███    ██ ██████  ██████  ██    ██'
-    '████   ██ ██         ██    ██      ██    ██ ██    ██ ████   ██ ██   ██ ██   ██  ██  ██ '
-    '██ ██  ██ █████      ██    █████   ██    ██ ██    ██ ██ ██  ██ ██   ██ ██████    ████  '
-    '██  ██ ██ ██         ██    ██      ██    ██ ██    ██ ██  ██ ██ ██   ██ ██   ██    ██   '
-    '██   ████ ███████    ██    ██       ██████   ██████  ██   ████ ██████  ██   ██    ██   '
+ZitiLogo=(
     '                                                                                       '
     '             ██████  ██████  ███████ ███    ██ ███████ ██ ████████ ██                  '
     '            ██    ██ ██   ██ ██      ████   ██    ███  ██    ██    ██                  '
     '            ██    ██ ██████  █████   ██ ██  ██   ███   ██    ██    ██                  '
     '            ██    ██ ██      ██      ██  ██ ██  ███    ██    ██    ██                  '
     '             ██████  ██      ███████ ██   ████ ███████ ██    ██    ██                  '
+    '███    ██ ███████ ████████ ███████  ██████  ██    ██ ███    ██ ██████  ██████  ██    ██'
+    '████   ██ ██         ██    ██      ██    ██ ██    ██ ████   ██ ██   ██ ██   ██  ██  ██ '
+    '██ ██  ██ █████      ██    █████   ██    ██ ██    ██ ██ ██  ██ ██   ██ ██████    ████  '
+    '██  ██ ██ ██         ██    ██      ██    ██ ██    ██ ██  ██ ██ ██   ██ ██   ██    ██   '
+    '██   ████ ███████    ██    ██       ██████   ██████  ██   ████ ██████  ██   ██    ██   '
     '                       BETA: THIS IS A WORK IN PROGRESS                                ')
-ZETVersion="$(/opt/NetFoundry/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
+ZETVersion="$(/opt/openziti/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
 
 if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
-    for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
-        printf "%s\n" "${NFZTLogo[${i}]}"
+    for ((i = 0; i < ${#ZitiLogo[*]}; i++)); do
+        printf "%s\n" "${ZitiLogo[${i}]}"
     done
     echo
 
-    printf "\n%-30s: %s\n" "ZITI EDGE TUNNEL Version" "${ZETVersion}"
+    printf "\n%-30s: %s\n" "Ziti-Edge-Tunnel Version" "${ZETVersion}"
     echo
 
     HACLIInfo="$(ha cli info | awk '/version:/{print $2}' || echo UNKNOWN)"
@@ -44,9 +44,9 @@ if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
     echo
 else
     printf "<span id=\"OPENZITITEXT\">\n"
-    for ((i = 0; i < ${#NFZTLogo[*]}; i++)); do
-        printf "<span>%s</span><br>" "${NFZTLogo[${i}]// /\&nbsp}"
+    for ((i = 0; i < ${#ZitiLogo[*]}; i++)); do
+        printf "<span>%s</span><br>" "${ZitiLogo[${i}]// /\&nbsp}"
     done
     printf "</span><hr>"
-    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH BG-LTGREY ANIMATED T500MS\">ZITI EDGE TUNNEL: %s</span>" "v${ZETVersion}"
+    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH BG-LTGREY ANIMATED T500MS\">Ziti-Edge-Tunnel: %s</span>" "v${ZETVersion}"
 fi

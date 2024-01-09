@@ -1,3 +1,3 @@
 <?php
-    echo shell_exec("/usr/bin/sudo /opt/NetFoundry/scripts/infodisplay.sh");
+    echo shell_exec("/usr/bin/sudo /opt/openziti/scripts/infodisplay.sh");
 ?>

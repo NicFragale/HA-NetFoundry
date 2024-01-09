@@ -2,7 +2,7 @@
 ####################################################################################################
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="startup.sh"
-MyPurpose="NetFoundry ZITI Edge Tunnel Startup Script for Home Assistant."
+MyPurpose="Ziti-Edge-Tunnel Startup Script for Home Assistant."
 ####################################################################################################
 #set -e -u -o pipefail
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
@@ -21,10 +21,10 @@ function CheckWait() {
         if [[ -d /proc/${TARGETPID} ]]; then
             # Trigger a log entry only every 5m.
             [[ $((++ITR % 60)) -eq 0 ]] &&
-                bashio::log.info "ZITI EDGE TUNNEL - [$((ITR / 60))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
+                bashio::log.info "ZITI-EDGE-TUNNEL: [$((ITR / 60))/$(date)] [PID:${TARGETPID}] [WAIT:${TARGETNAME}]"
             sleep 5
         else
-            bashio::log.notice "ZITI EDGE TUNNEL - [$((++ITR / 60))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
+            bashio::log.notice "ZITI-EDGE-TUNNEL: [$((++ITR / 60))/$(date)] [PID:${TARGETPID}] [END:${TARGETNAME}]"
             break
         fi
     done
@@ -84,9 +84,13 @@ function PreCheck() {
     chmod 700 -R "${SCRIPTDIRECTORY}"
 
     # Check identities folder for validity and list available identities.
+    if [[ -d "/share/NetFoundry" ]]; then
+        bashio::log.warning "Found old directory structure.  Renaming..."
+        mv -vf "/share/NetFoundry" "/share/openziti"
+    fi
     if [[ ! -d ${IDENTITYDIRECTORY} ]] && ! mkdir -vp "${IDENTITYDIRECTORY}"; then
         bashio::log.error "IDENTITY LISTING ERROR"
-        bashio::exit.nok "ZITI EDGE TUNNEL - PROGRAM END"
+        bashio::exit.nok "ZITI-EDGE-TUNNEL: PROGRAM END"
     fi
 }
 
@@ -95,14 +99,14 @@ function RunEnrollment() {
     local RUNTIME="${1}"
     local ENROLLJWT="${2}"
     local ENROLLSTRING
-    bashio::log.notice "ZITI EDGE TUNNEL - ENROLL BEGIN"
+    bashio::log.notice "ZITI-EDGE-TUNNEL: ENROLL BEGIN"
     ENROLLSTRING="enroll -j \"-\" -i \"${IDENTITYDIRECTORY}/ZTID-$(date +"%Y%m%d_%H%M%S").json\""
     /bin/bash -c "${RUNTIME} ${ENROLLSTRING} <<< ${ENROLLJWT}" &
     ENROLLPID=$!
     CheckWait "ENROLL" "${ENROLLPID}" &
     wait $!
     find "${IDENTITYDIRECTORY}" -maxdepth 1 -type f -empty -delete
-    bashio::log.notice "ZITI EDGE TUNNEL - ENROLL END"
+    bashio::log.notice "ZITI-EDGE-TUNNEL: ENROLL END"
 }
 
 function IdentityCheck() {
@@ -118,7 +122,7 @@ function IdentityCheck() {
     else
         bashio::log.error "NO VALID IDENTITIES AVAILABLE - ENROLL ONE FIRST (SLEEPING 60s)"
         sleep 60
-        bashio::exit.nok "ZITI EDGE TUNNEL - PROGRAM END"
+        bashio::exit.nok "ZITI-EDGE-TUNNEL: PROGRAM END"
     fi
 }
 
@@ -129,31 +133,31 @@ function IdentityCheck() {
 # Variables Declaration
 ############################
 # 1/IDENTITYDIRECTORY, 2/RESOLUTIONRANGE, 3/UPSTREAMRESOLVER, 4/LOGLEVEL, 5/ENROLLJWT
-IDENTITYDIRECTORY="${1:-/share/NetFoundry/identities}"
+IDENTITYDIRECTORY="${1:-/share/openziti/identities}"
 RESOLUTIONRANGE="${2:-100.64.64.0/18}"
 ZITI_DNS_IP="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
 UPSTREAMRESOLVER="${3:-1.1.1.1}"
 LOGLEVEL="${4:-3}"
 ENROLLJWT="${5:-UNSET}"
-RUNTIME="/opt/NetFoundry/ziti-edge-tunnel"
-SCRIPTDIRECTORY="/opt/NetFoundry/scripts"
+RUNTIME="/opt/openziti/ziti-edge-tunnel"
+SCRIPTDIRECTORY="/opt/openziti/scripts"
 ASSISTAPPBINARIES=("nginx" "php-fpm81")
 ASSISTAPPOPTS=("" "")
 
 ############################
 # PreInit
 ############################
-bashio::log.notice "ZITI EDGE TUNNEL - PREINIT BEGIN"
+bashio::log.notice "ZITI-EDGE-TUNNEL: PREINIT BEGIN"
 
 # Run prechecking.
 PreCheck
 
 # Perform enrollment should a JWT be available.
 if [[ ${ENROLLJWT} != "UNSET" ]]; then
-    bashio::log.info "ZITI EDGE TUNNEL - ENROLLMENT REQUESTED"
+    bashio::log.info "ZITI-EDGE-TUNNEL: ENROLLMENT REQUESTED"
     RunEnrollment "${RUNTIME}" "${ENROLLJWT}"
 else
-    bashio::log.info "ZITI EDGE TUNNEL - ENROLLMENT NOT REQUESTED"
+    bashio::log.info "ZITI-EDGE-TUNNEL: ENROLLMENT NOT REQUESTED"
 fi
 
 # Check for available identities.
@@ -174,12 +178,12 @@ done
 RUNTIMEOPTS="run -I ${IDENTITYDIRECTORY} -d ${RESOLUTIONRANGE} -u ${UPSTREAMRESOLVER} -v ${LOGLEVEL}"
 bashio::log.info "INIT STRING: [${RUNTIME} ${RUNTIMEOPTS}]"
 
-bashio::log.notice "ZITI EDGE TUNNEL - PREINIT END"
+bashio::log.notice "ZITI-EDGE-TUNNEL: PREINIT END"
 
 ############################
 # Program Runtime
 ############################
-bashio::log.notice "ZITI EDGE TUNNEL - PROGRAM BEGIN"
+bashio::log.notice "ZITI-EDGE-TUNNEL: PROGRAM BEGIN"
 # Runtime is sent to the background for monitoring.
 /bin/bash -c "${RUNTIME} ${RUNTIMEOPTS}" &
 ZETPID=$!
@@ -189,4 +193,4 @@ wait $!
 # Set the system resolver back to initial state.
 SetSystemResolver "${UPSTREAMRESOLVER}"
 
-bashio::log.notice "ZITI EDGE TUNNEL - PROGRAM END"
+bashio::log.notice "ZITI-EDGE-TUNNEL: PROGRAM END"

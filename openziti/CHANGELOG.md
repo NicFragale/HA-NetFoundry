@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4
+
+- Nomenclature alignment.
+
 ## 1.3.5
 
 - Fixes issues with enrollment.
@@ -8,7 +12,7 @@
 ## 1.3.4
 
 - Addresses a problem with decoding a new identity (JWT).
-- Updates the ZITI EDGE TUNNEL (v0.22.16) utilizing ZITI C SDK (v0.35.8).
+- Updates the Ziti-Edge-Tunnel (v0.22.16) utilizing ZITI C SDK (v0.35.8).
 
 ## 1.3.3
 
@@ -24,7 +28,7 @@
 
 ## 1.3.0
 
-- Major update to newest OpenZITI tunnel (C-SDK).
+- Major update to newest OpenZiti tunnel (C-SDK).
 
 ## 1.2.3
 
@@ -55,7 +59,7 @@
 
 ## 1.1.2
 
-- Updates the ZITI EDGE TUNNEL (v0.21.0) utilizing ZITI C SDK (v0.31.5).
+- Updates the Ziti-Edge-Tunnel (v0.21.0) utilizing ZITI C SDK (v0.31.5).
 
 ## 1.1.1
 

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="application/xml+xhtml; charset=UTF-8"/>
-        <title>NetFoundry OpenZITI (ZITI EDGE TUNNEL) Status Page</title>
+        <title>OpenZiti by NetFoundry (Ziti-Edge-Tunnel) Status Page</title>
         <script src="jquery-3.6.4.min.js"></script>
         <style type="text/css">
             body {

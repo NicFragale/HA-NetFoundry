@@ -2,7 +2,7 @@
 ####################################################################################################
 # 20230428 - Written by Nic Fragale @ NetFoundry.
 MyName="zetdisplay.sh"
-MyPurpose="NetFoundry ZITI Edge Tunnel Runtime Display."
+MyPurpose="Ziti-Edge-Tunnel Runtime Display."
 ####################################################################################################
 #set -e -u -o pipefail
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
@@ -23,7 +23,7 @@ function ZET_Status() {
 		if [[ -e ${ZETSock} ]]; then
 			ZETSocksDir="${ZETSock%\/*}"
 		else
-			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The ZITI EDGE TUNNEL socket is not available. Please wait or restart."
+			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The ZITI-EDGE-TUNNEL socket is not available. Please wait or restart."
 			return
 		fi
 	fi

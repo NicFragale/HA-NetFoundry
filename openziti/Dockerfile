@@ -33,16 +33,16 @@ RUN set -x \
     -e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
     -e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
     -e 's/nobody/nginx/g' /etc/php8*/php-fpm.d/www.conf \
-    && echo -e "nginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/NetFoundry/scripts/zetdisplay.sh\n" >> /etc/sudoers
+    && echo -e "nginx ALL = (root) NOPASSWD: /opt/openziti/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/openziti/scripts/zetdisplay.sh\n" >> /etc/sudoers
 
-# Build and setup NetFoundry OpenZITI.
+# Build and setup OpenZiti.
 RUN set -x \
     && MYARCH="$(arch)" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "aarch64" ]] && echo "ci-linux-arm64")" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armv7l" ]] && echo "ci-linux-arm64")" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
     && export VCPKG_FORCE_SYSTEM_BINARIES=1 \
-    && export ZITI_ROOT="/opt/NetFoundry" \
+    && export ZITI_ROOT="/opt/openziti" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
     && export VCPKG_ROOT="${ZITI_ROOT}/vcpkg" \
     && mkdir -vp "${VCPKG_ROOT}" "${ZITI_ROOT}" "${ZITIBUILD_ROOT}" \
