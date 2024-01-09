@@ -2,7 +2,7 @@
 ####################################################################################################
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="profile.sh"
-MyPurpose="NetFoundry ZITI Edge Tunnel Profile Loading Script for Home Assistant."
+MyPurpose="Ziti-Edge-Tunnel Profile Loading Script for Home Assistant."
 ####################################################################################################
 #set -e -u -o pipefail
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
@@ -17,8 +17,8 @@ mkdir -p /etc/profile.d
 bashio::var.json \
     supervisor_token "${SUPERVISOR_TOKEN}" |
     tempio \
-        -template /usr/share/tempio/netfoundry.profile \
-        -out /etc/profile.d/netfoundry.sh
+        -template /usr/share/tempio/openziti.profile \
+        -out /etc/profile.d/openziti.sh
 
 # Link common directories.
 for dir in "${DIRECTORIES[@]}"; do

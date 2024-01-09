@@ -2,7 +2,7 @@
 ####################################################################################################
 # 20230119 - Written by Nic Fragale @ NetFoundry.
 MyName="run"
-MyPurpose="NetFoundry ZITI Edge Tunnel Runtime Script for Home Assistant."
+MyPurpose="Ziti-Edge-Tunnel Runtime Script for Home Assistant."
 ####################################################################################################
 #set -e -u -o pipefail
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
@@ -15,7 +15,7 @@ LogLevel="$(bashio::config 'LogLevel')"
 
 IdentityDirectory="$(bashio::config 'IdentityDirectory')"
 [[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] &&
-        IdentityDirectory="/share/NetFoundry/identities"
+        IdentityDirectory="/share/openziti/identities"
 
 ResolutionRange="$(bashio::config 'ResolutionRange')"
 [[ ${ResolutionRange:=DEFAULT} == "DEFAULT" ]] &&
@@ -29,7 +29,7 @@ EnrollmentJWT="$(bashio::config 'EnrollmentJWT')"
 [[ ${EnrollmentJWT:=UNSET} == "UNSET" ]] &&
         EnrollmentJWT="UNSET"
 
-bashio::log.notice "Starting NetFoundry ZITI..."
+bashio::log.notice "Starting Ziti-Edge-Tunnel..."
 [[ ${SUPERVISOR_TOKEN:=NULL} == "NULL" ]] &&
         SUPERVISOR_TOKEN="null"
 
@@ -41,4 +41,4 @@ bashio::log.info "  with LogLevel          \"${LogLevel}\"."
 [[ ${EnrollmentJWT} != "UNSET" ]] &&
         bashio::log.info "  with EnrollmentJWT     \"${EnrollmentJWT:0:10}...${EnrollmentJWT:0-10}\"."
 
-exec /opt/NetFoundry/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" </dev/null
+exec /opt/openziti/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" </dev/null
