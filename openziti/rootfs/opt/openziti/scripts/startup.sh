@@ -141,7 +141,7 @@ LOGLEVEL="${4:-3}"
 ENROLLJWT="${5:-UNSET}"
 RUNTIME="/opt/openziti/ziti-edge-tunnel"
 SCRIPTDIRECTORY="/opt/openziti/scripts"
-ASSISTAPPBINARIES=("nginx" "php-fpm81")
+ASSISTAPPBINARIES=("nginx" "php-fpm82")
 ASSISTAPPOPTS=("" "")
 
 ############################
