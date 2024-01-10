@@ -9,6 +9,7 @@ MyPurpose="Ziti-Edge-Tunnel Host Information Display."
     bashio::log.info "MyName: ${MyName}" &&
     bashio::log.info "MyPurpose: ${MyPurpose}"
 
+ShowMode="${1:-DEFAULT}"
 ZitiLogo=(
     '                                                                                       '
     '             ██████  ██████  ███████ ███    ██ ███████ ██ ████████ ██                  '
@@ -24,7 +25,7 @@ ZitiLogo=(
     '                       BETA: THIS IS A WORK IN PROGRESS                                ')
 ZETVersion="$(/opt/openziti/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
 
-if [[ -n ${1} ]] && [[ ${1} == "FULLDETAIL" ]]; then
+if [[ ${ShowMode} == "FULLDETAIL" ]]; then
     for ((i = 0; i < ${#ZitiLogo[*]}; i++)); do
         printf "%s\n" "${ZitiLogo[${i}]}"
     done
