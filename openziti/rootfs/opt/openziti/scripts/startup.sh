@@ -16,8 +16,16 @@ function CheckWait() {
     # 1/TARGETNAME, 2/TARGETPID
     local TARGETNAME="${1}"
     local TARGETPID="${2}"
-    local ITR=0
+    local ITR=0 RESOLV=""
     while true; do
+        # Prevent modification to resolvers.
+        RESOLV="$(while IFS=$'\n' read -r EachLine; do
+            [[ "${EachLine/${EachLine/nameserver 100.64/}/}" == "nameserver 100.64" ]] \
+                && echo "#${EachLine}" \
+                || echo "${EachLine}"
+        done < /etc/resolv.conf)"
+        echo "${RESOLV}" > /etc/resolv.conf
+        
         if [[ -d /proc/${TARGETPID} ]]; then
             # Trigger a log entry only every 5m.
             [[ $((++ITR % 60)) -eq 0 ]] &&
@@ -33,6 +41,7 @@ function CheckWait() {
 function SetSystemResolver() {
     # 1/SETTOIP
     local SETTOIP="${1}"
+
     if [[ -n "${SETTOIP}" ]]; then
         if /usr/bin/ha dns options --servers dns://"${SETTOIP}" &>/dev/null; then
             bashio::log.info "Setup of system resolver via REST to [${SETTOIP}] succeeded."
@@ -80,6 +89,13 @@ function StartAssistBinaries() {
 }
 
 function PreCheck() {
+    # Assess the runtime and environment.
+    local RuntimeVersion SystemArch
+    RuntimeVersion="$(/bin/bash -c "/opt/openziti/ziti-edge-tunnel version 2>/dev/null || echo ERROR")"
+    SystemArch="$(/bin/bash -c "arch")"
+    bashio::log.info "Runtime version is \"${RuntimeVersion}\"."
+    bashio::log.info "Architecture is \"${SystemArch}\"."
+
     # Set permissions as required for normal operations.
     chmod 700 -R "${SCRIPTDIRECTORY}"
 

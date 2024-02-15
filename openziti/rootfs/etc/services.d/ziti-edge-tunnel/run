@@ -33,11 +33,11 @@ bashio::log.notice "Starting Ziti-Edge-Tunnel..."
 [[ ${SUPERVISOR_TOKEN:=NULL} == "NULL" ]] &&
         SUPERVISOR_TOKEN="null"
 
-bashio::log.info "  with SUPERVISOR_TOKEN  \"${SUPERVISOR_TOKEN:0:10}...\"."
-bashio::log.info "  with IdentityDirectory \"${IdentityDirectory}\"."
-bashio::log.info "  with ResolutionRange   \"${ResolutionRange}\"."
-bashio::log.info "  with UpstreamResolver  \"${UpstreamResolver}\"."
-bashio::log.info "  with LogLevel          \"${LogLevel}\"."
+bashio::log.info "with SUPERVISOR_TOKEN  :\"${SUPERVISOR_TOKEN:0:10}...\"."
+bashio::log.info "with IdentityDirectory :\"${IdentityDirectory}\"."
+bashio::log.info "with ResolutionRange   :\"${ResolutionRange}\"."
+bashio::log.info "with UpstreamResolver  :\"${UpstreamResolver}\"."
+bashio::log.info "with LogLevel          :\"${LogLevel}\"."
 [[ ${EnrollmentJWT} != "UNSET" ]] &&
         bashio::log.info "  with EnrollmentJWT     \"${EnrollmentJWT:0:10}...${EnrollmentJWT:0-10}\"."
 

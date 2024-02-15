@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5
+
+- Temporary measures to ensure DNS resolution does not fail.
+
 ## 1.4
 
 - Nomenclature alignment.
