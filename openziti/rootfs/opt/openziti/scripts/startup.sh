@@ -16,16 +16,25 @@ function CheckWait() {
     # 1/TARGETNAME, 2/TARGETPID
     local TARGETNAME="${1}"
     local TARGETPID="${2}"
-    local ITR=0 RESOLV=""
+    local ITR="0"
+    local NEWRESOLV RESOLVBOOL
+
     while true; do
         # Prevent modification to resolvers.
-        RESOLV="$(while IFS=$'\n' read -r EachLine; do
-            [[ "${EachLine/${EachLine/nameserver 100.64/}/}" == "nameserver 100.64" ]] \
-                && echo "#${EachLine}" \
-                || echo "${EachLine}"
-        done < /etc/resolv.conf)"
-        echo "${RESOLV}" > /etc/resolv.conf
-        
+        NEWRESOLV=""
+        RESOLVBOOL="FALSE"
+        while IFS=$'\n' read -r EachLine; do
+            if [[ "${EachLine/${EachLine/nameserver 100.64/}/}" == "nameserver 100.64" ]]; then
+                NEWRESOLV="${NEWRESOLV}\n#${EachLine}"
+                RESOLVBOOL="TRUE"
+            else
+                NEWRESOLV="${NEWRESOLV}\n${EachLine}"
+            fi
+        done < /etc/resolv.conf
+        [[ ${RESOLVBOOL} == "TRUE" ]] \
+            && echo -e "${NEWRESOLV}" > /etc/resolv.conf \
+            && bashio::log.info "UPDATED RESOLV CONFIGURATION"
+
         if [[ -d /proc/${TARGETPID} ]]; then
             # Trigger a log entry only every 5m.
             [[ $((++ITR % 60)) -eq 0 ]] &&
@@ -191,7 +200,7 @@ for ((i = 0; i < ${#ASSISTAPPBINARIES[*]}; i++)); do
 done
 
 # Set the syntax string for startup.
-RUNTIMEOPTS="run -I ${IDENTITYDIRECTORY} -d ${RESOLUTIONRANGE} -u ${UPSTREAMRESOLVER} -v ${LOGLEVEL}"
+RUNTIMEOPTS="run -I ${IDENTITYDIRECTORY} -u ${UPSTREAMRESOLVER} -v ${LOGLEVEL}"
 bashio::log.info "INIT STRING: [${RUNTIME} ${RUNTIMEOPTS}]"
 
 bashio::log.notice "ZITI-EDGE-TUNNEL: PREINIT END"

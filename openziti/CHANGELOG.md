@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+- Reverts to a previous version of the c-sdk tunnel due to issues with DNS.
+
 ## 1.5
 
 - Temporary measures to ensure DNS resolution does not fail.
