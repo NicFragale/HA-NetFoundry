@@ -37,7 +37,8 @@ RUN set -x \
 
 # Build and setup OpenZiti.
 RUN set -x \
-    && MYARCH="$(arch)" \
+    && export ZTVERSION="0.22.19" \
+    && export MYARCH="$(arch)" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "aarch64" ]] && echo "ci-linux-arm64")" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armv7l" ]] && echo "ci-linux-arm64")" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${MYARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
