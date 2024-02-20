@@ -3,8 +3,8 @@ build_from:
   amd64: "ghcr.io/home-assistant/amd64-base:latest"
 args:
   CLIVERSION: "4.29.0"
-  ZTVERSION: ""
-  ZTBRANCHOVERRIDE: ""
+#  ZTVERSION: ""
+#  ZTBRANCHOVERRIDE: ""
 #codenotary:
 #  signer: "nicfragale+cas@gmail.com"
 #  base_image: "notary@home-assistant.io"
