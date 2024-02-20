@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.2
+
+- DNS code is now corrected within the CSDK Tunnel of ZITI (v0.22.22) so the addon has been updated to use it.
+- Updated build of the addon to utilize OPENSSL vs MBEDTLS.
+- Wrapping code ensures DNS correctness for this environment.
+- Added build enhancements to allow for target ZITI version as well as HA CLI version.
+- An HA CLI bug was found with v4.30.0 so previous CLI is used in build now until it is fixed.
+
 ## 1.5.1
 
 - Reverts to a previous version of the c-sdk tunnel due to issues with DNS.
