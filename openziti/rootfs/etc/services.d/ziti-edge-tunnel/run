@@ -11,7 +11,7 @@ MyPurpose="Ziti-Edge-Tunnel Runtime Script for Home Assistant."
 
 LogLevel="$(bashio::config 'LogLevel')"
 [[ ${LogLevel:=DEFAULT} == "DEFAULT" ]] &&
-        LogLevel="3"
+        LogLevel="2"
 
 IdentityDirectory="$(bashio::config 'IdentityDirectory')"
 [[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] &&

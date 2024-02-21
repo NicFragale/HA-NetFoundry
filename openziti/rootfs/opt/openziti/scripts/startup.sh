@@ -162,11 +162,11 @@ IDENTITYDIRECTORY="${1:-/share/openziti/identities}"
 RESOLUTIONRANGE="${2:-100.64.64.0/18}"
 ZITI_DNS_IP="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
 UPSTREAMRESOLVER="${3:-1.1.1.1}"
-LOGLEVEL="${4:-3}"
+LOGLEVEL="${4:-2}"
 ENROLLJWT="${5:-UNSET}"
 RUNTIME="/opt/openziti/ziti-edge-tunnel"
 SCRIPTDIRECTORY="/opt/openziti/scripts"
-ASSISTAPPBINARIES=("nginx" "php-fpm82")
+ASSISTAPPBINARIES=("nginx" "php")
 ASSISTAPPOPTS=("" "")
 
 ############################
@@ -196,7 +196,8 @@ SetSystemResolver "${ZITI_DNS_IP}"
 
 # Startup of assisting binaries.
 for ((i = 0; i < ${#ASSISTAPPBINARIES[*]}; i++)); do
-    StartAssistBinaries "${ASSISTAPPBINARIES[${i}]}" "${ASSISTAPPOPTS[${i}]}"
+    THISAPPBINARY="$(find /usr/sbin -name "${ASSISTAPPBINARIES[${i}]}*")"
+    StartAssistBinaries "${THISAPPBINARY##*\/}" "${ASSISTAPPOPTS[${i}]}"
 done
 
 # Set the syntax string for startup.

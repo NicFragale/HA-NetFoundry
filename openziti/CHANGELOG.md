@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.3
+
+- Drop support for ARMHF - It is just too old at this point.
+- Updates to HA CLI (v4.30.1) - PINNED.
+- Updates to OpenZiti (TUN v0.22.22, CSDK v0.36.5) - PINNED.
+- Change default log level to 2 (out of 6).
+- Improve handling of assisting binaries.
+
 ## 1.5.2
 
 - DNS code is now corrected within the CSDK Tunnel of ZITI (v0.22.22) so the addon has been updated to use it.

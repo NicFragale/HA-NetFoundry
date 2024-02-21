@@ -18,7 +18,7 @@ configuration:
     description: >-
       [OPTIONAL]
       A numeric value between (1/INFO/LOWEST) and (6/DEBUG/HIGHEST).
-      If not present, will default to (3).
+      If not present, will default to (2).
   UpstreamResolver:
     name: Upstream Resolver
     description: >-

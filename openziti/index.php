@@ -28,7 +28,7 @@
                 left: 0;
                 z-index: -1;
             }
-            #ZETLOADSTATUS {line-height: 5em; cursor: pointer;}
+            #ZETLOADSTATUS {cursor: pointer;}
             .BODYOVERLAY {height: 100%; width: 100%; position: fixed;}
             .BODYWHITE {background: white; text-shadow: 0px 0px 1px white;}
             .BODYBLACK {background: black; text-shadow: 0px 0px 1px black;}

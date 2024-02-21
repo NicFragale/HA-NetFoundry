@@ -12,7 +12,7 @@ ARG BUILD_ARCH CLIVERSION ZTVERSION ZTBRANCHOVERRIDE
 LABEL \
     io.hass.name="OpenZiti by NetFoundry" \
     io.hass.description="True zero trust networking." \
-    io.hass.arch="armhf|aarch64|i386|amd64" \
+    io.hass.arch="aarch64|i386|amd64" \
     io.hass.type="addon" \
     io.hass.image.licenses="APACHE2.0" \
     io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
@@ -29,10 +29,10 @@ RUN set -x \
 # Setup NGINX.
 RUN set -x \
     && mkdir -vp '/var/run/nginx' '/var/run/php' '/var/www/html/images' \
-    && sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php8.1-fpm.sock/' \
+    && sed -i -e 's/^;listen =.*\|^listen =.*/listen = \/var\/run\/php\/php-fpm.sock/' \
     -e 's/^;listen.owner =.*\|^listen.owner =.*/listen.owner = nginx/' \
     -e 's/^;listen.group =.*\|^listen.group =.*/listen.group = nginx/' \
-    -e 's/nobody/nginx/g' /etc/php8*/php-fpm.d/www.conf \
+    -e 's/nobody/nginx/g' /etc/php*/php-fpm.d/www.conf \
     && echo -e "nginx ALL = (root) NOPASSWD: /opt/openziti/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/openziti/scripts/zetdisplay.sh\n" >> /etc/sudoers
 
 # Build and setup OpenZiti.
