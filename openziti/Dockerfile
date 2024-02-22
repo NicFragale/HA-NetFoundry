@@ -12,7 +12,7 @@ ARG BUILD_ARCH CLIVERSION ZTVERSION ZTBRANCHOVERRIDE
 LABEL \
     io.hass.name="OpenZiti by NetFoundry" \
     io.hass.description="True zero trust networking." \
-    io.hass.arch="aarch64|i386|amd64" \
+    io.hass.arch="aarch64|i386|amd64|arm" \
     io.hass.type="addon" \
     io.hass.image.licenses="APACHE2.0" \
     io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
@@ -38,7 +38,9 @@ RUN set -x \
 # Build and setup OpenZiti.
 RUN set -x \
     && export HOME="/root" \
-    && export CMAKE_PRESET="$([[ "${BUILD_ARCH}" == "aarch64" ]] || [[ "${BUILD_ARCH}" == "armv7" ]] || [[ "${BUILD_ARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "aarch64" ]] && echo "ci-linux-arm64")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "armv7" ]] && echo "ci-linux-arm")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "armhf" ]] && echo "ci-linux-arm")" \
     && export VCPKG_FORCE_SYSTEM_BINARIES=1 \
     && export ZITI_ROOT="/opt/openziti" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
@@ -53,8 +55,10 @@ RUN set -x \
     && unzip "v${ZTVERSION}.zip" \
     && sed -i 's/test//; s/mbedtls/openssl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/CMakePresets.json" \
     && sed -i '/"mbedtls"/d; s/"getopt",/"getopt"/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/vcpkg.json" \
+    && sed -i 's/arm-linux-gnueabihf/armv7-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
     && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
+    && sed -i 's/arm/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm-linux.cmake" \
     && sed -i '4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/x64-linux.cmake" \
     && cmake \
         --fresh \
