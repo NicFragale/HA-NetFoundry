@@ -53,8 +53,6 @@ RUN set -x \
     && ZTVERSION="${ZTVERSION:-$(curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' | awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' | sort -rnt '.' -k1,1 -k2,2 -k3,3 | head -n1)}" \
     && curl -Lso "v${ZTVERSION}.zip" "${ZTBRANCHOVERRIDE:-https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip}" \
     && unzip "v${ZTVERSION}.zip" \
-    && sed -i 's/test//; s/mbedtls/openssl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/CMakePresets.json" \
-    && sed -i '/"mbedtls"/d; s/"getopt",/"getopt"/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/vcpkg.json" \
     && sed -i 's/arm-linux-gnueabihf/armv7-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
     && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
