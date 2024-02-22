@@ -58,16 +58,17 @@ RUN set -x \
     && sed -i 's/arm64/aarch64/' ../vcpkg/triplets/community/arm64-linux.cmake \
     && sed -i 's/arm/aarch64/' ../vcpkg/triplets/community/arm-linux.cmake \
     && cmake \
-        --fresh \
-        -DGIT_VERSION="${ZTVERSION}" \
-        -DTLSUV_TLSLIB="openssl" \
-        -DHAVE_LIBSODIUM="ON" \
-        -DDISABLE_LIBSYSTEMD_FEATURE="ON" \
-        --preset "${CMAKE_PRESET:-ci-linux-x64}" \
-        -DCMAKE_BUILD_TYPE="Release" \
-        -DBUILD_DIST_PACKAGES="OFF" \
-        -DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
-        -B "${ZITIBUILD_ROOT}" \
+    --fresh \
+    -DGIT_VERSION="${ZTVERSION}" \
+    -DTLSUV_TLSLIB="openssl" \
+    -DHAVE_LIBSODIUM="ON" \
+    -DDISABLE_LIBSYSTEMD_FEATURE="ON" \
+    --preset "${CMAKE_PRESET:-ci-linux-x64}" \
+    -DBUILD_DIST_PACKAGES="OFF" \
+    -DCMAKE_BUILD_TYPE="Release" \
+    -DVCPKG_BUILD_TYPE="Release" \
+    -DVCPKG_OVERLAY_PORTS="./vcpkg-overlays/linux-syslibs/ubuntu18" \
+    -B "${ZITIBUILD_ROOT}" \
     && cd "${ZITI_ROOT}" \
     && cmake --build "${ZITIBUILD_ROOT}" --target "ziti-edge-tunnel" \
     && mv -vf "${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Debug/ziti-edge-tunnel" . \
