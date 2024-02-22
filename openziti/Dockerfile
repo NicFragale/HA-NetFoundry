@@ -43,7 +43,7 @@ RUN set -x \
     && export ZITI_ROOT="/opt/openziti" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
     && export VCPKG_ROOT="${ZITI_ROOT}/vcpkg" \
-    && mkdir -vp "${VCPKG_ROOT}" "${ZITI_ROOT}" \
+    && mkdir -vp "${VCPKG_ROOT}" \
     && cd "${ZITI_ROOT}" \
     && git clone "https://github.com/microsoft/vcpkg" "${VCPKG_ROOT}" \
     && "${VCPKG_ROOT}/bootstrap-vcpkg.sh" -disableMetrics -musl \
