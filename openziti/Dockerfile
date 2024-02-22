@@ -52,7 +52,7 @@ RUN set -x \
     && curl -Lso "v${ZTVERSION}.zip" "${ZTBRANCHOVERRIDE:-https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip}" \
     && unzip "v${ZTVERSION}.zip" \
     && sed -i 's/test//; s/mbedtls/openssl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/CMakePresets.json" \
-    && sed '/"mbedtls"/d; s/"getopt",/"getopt"/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/vcpkg.json" \
+    && sed -i '/"mbedtls"/d; s/"getopt",/"getopt"/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/vcpkg.json" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
     && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
     && sed -i '4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/x64-linux.cmake" \
