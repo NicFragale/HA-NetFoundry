@@ -13,6 +13,7 @@ arch:
   - amd64
   - armv7
   - i386
+  - armhf
 panel_icon: mdi:lightning-bolt-circle
 panel_title: "OpenZiti"
 ingress: true

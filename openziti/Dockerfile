@@ -38,7 +38,7 @@ RUN set -x \
 # Build and setup OpenZiti.
 RUN set -x \
     && export HOME="/root" \
-    && export CMAKE_PRESET="$([[ "${BUILD_ARCH}" == "aarch64" ]] || [[ "${BUILD_ARCH}" == "armv7l" ]] || [[ "${BUILD_ARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
+    && export CMAKE_PRESET="$([[ "${BUILD_ARCH}" == "aarch64" ]] || [[ "${BUILD_ARCH}" == "armv7" ]] || [[ "${BUILD_ARCH}" == "armhf" ]] && echo "ci-linux-arm64")" \
     && export VCPKG_FORCE_SYSTEM_BINARIES=1 \
     && export ZITI_ROOT="/opt/openziti" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
