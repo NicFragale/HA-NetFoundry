@@ -1,9 +1,9 @@
 name: "OpenZiti by NetFoundry"
 description: "Zero Trust Application Specific Networking"
-version: "1.5.3"
+version: "1.5.4"
 slug: "openziti"
 # To build locally on your platform, comment "image" and "url" out.
-url: "https://github.com/ospenziti"
+url: "https://github.com/openziti"
 image: "nfragale/openziti-{arch}"
 codenotary: "nicfragale+cas@gmail.com"
 startup: services

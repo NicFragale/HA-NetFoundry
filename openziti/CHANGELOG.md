@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4
+
+- Refactor the method by which building of ZET occurs so it is faster.
+
 ## 1.5.3
 
 - Drop support for ARMHF - It is just too old at this point.
