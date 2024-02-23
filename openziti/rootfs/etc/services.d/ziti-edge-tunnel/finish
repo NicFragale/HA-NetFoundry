@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bashio
+####################################################################################################
+# 20230119 - Written by Nic Fragale @ NetFoundry.
+MyName="finish"
+MyPurpose="Ziti-Edge-Tunnel Shutdown Script for Home Assistant."
+####################################################################################################
+#set -e -u -o pipefail
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
+    bashio::log.info "MyName: ${MyName}" &&
+    bashio::log.info "MyPurpose: ${MyPurpose}"
+
+bashio::log.notice "Stopped Ziti-Edge-Tunnel..."

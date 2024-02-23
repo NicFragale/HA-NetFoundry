@@ -1,0 +1,44 @@
+#!/usr/bin/with-contenv bashio
+####################################################################################################
+# 20230119 - Written by Nic Fragale @ NetFoundry.
+MyName="run"
+MyPurpose="Ziti-Edge-Tunnel Runtime Script for Home Assistant."
+####################################################################################################
+#set -e -u -o pipefail
+[[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
+        bashio::log.info "MyName: ${MyName}" &&
+        bashio::log.info "MyPurpose: ${MyPurpose}"
+
+LogLevel="$(bashio::config 'LogLevel')"
+[[ ${LogLevel:=DEFAULT} == "DEFAULT" ]] &&
+        LogLevel="2"
+
+IdentityDirectory="$(bashio::config 'IdentityDirectory')"
+[[ ${IdentityDirectory:=DEFAULT} == "DEFAULT" ]] &&
+        IdentityDirectory="/share/openziti/identities"
+
+ResolutionRange="$(bashio::config 'ResolutionRange')"
+[[ ${ResolutionRange:=DEFAULT} == "DEFAULT" ]] &&
+        ResolutionRange="100.64.64.0/18"
+
+UpstreamResolver="$(bashio::config 'UpstreamResolver')"
+[[ ${UpstreamResolver:=DEFAULT} == "DEFAULT" ]] &&
+        UpstreamResolver="$(ha dns info --raw-json | jq -r '[.data.locals[]][0] | sub("dns://";"")' 2>/dev/null || echo 1.1.1.1)"
+
+EnrollmentJWT="$(bashio::config 'EnrollmentJWT')"
+[[ ${EnrollmentJWT:=UNSET} == "UNSET" ]] &&
+        EnrollmentJWT="UNSET"
+
+bashio::log.notice "Starting Ziti-Edge-Tunnel..."
+[[ ${SUPERVISOR_TOKEN:=NULL} == "NULL" ]] &&
+        SUPERVISOR_TOKEN="null"
+
+bashio::log.info "with SUPERVISOR_TOKEN  :\"${SUPERVISOR_TOKEN:0:10}...\"."
+bashio::log.info "with IdentityDirectory :\"${IdentityDirectory}\"."
+bashio::log.info "with ResolutionRange   :\"${ResolutionRange}\"."
+bashio::log.info "with UpstreamResolver  :\"${UpstreamResolver}\"."
+bashio::log.info "with LogLevel          :\"${LogLevel}\"."
+[[ ${EnrollmentJWT} != "UNSET" ]] &&
+        bashio::log.info "  with EnrollmentJWT     \"${EnrollmentJWT:0:10}...${EnrollmentJWT:0-10}\"."
+
+exec /opt/openziti/scripts/startup.sh "${IdentityDirectory}" "${ResolutionRange}" "${UpstreamResolver}" "${LogLevel}" "${EnrollmentJWT}" </dev/null
