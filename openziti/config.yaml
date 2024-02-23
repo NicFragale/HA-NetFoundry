@@ -43,6 +43,6 @@ options:
 schema:
   EnrollmentJWT: str?
   IdentityDirectory: str?
-  LogLevel: list(1|DEFAULT|3|4|5|6)?
+  LogLevel: list(1|2|DEFAULT|4|5|6)?
   UpstreamResolver: str?
   ResolutionRange: list(100.64.0.0/18|100.64.64.0/18)?

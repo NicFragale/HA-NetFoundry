@@ -2,17 +2,14 @@
 # 20231101 - Written by Nic Fragale @ NetFoundry.
 ####################################################################################################
 # Utilize the build image that is appropriate.
-ARG BUILD_FROM
-FROM $BUILD_FROM
-
-# Build time arguements.
-ARG BUILD_ARCH CLIVERSION ZTVERSION ZTBRANCHOVERRIDE
+ARG BUILD_FROM BUILD_ARCH BUILD_VERSION CLIVERSION ZTVERSION ZTBRANCHOVERRIDE
+FROM ${BUILD_FROM}
 
 # Add labels to the image.
 LABEL \
     io.hass.name="OpenZiti by NetFoundry" \
     io.hass.description="True zero trust networking." \
-    io.hass.arch="aarch64|i386|amd64|arm" \
+    io.hass.arch="armhf|aarch64|i386|amd64" \
     io.hass.type="addon" \
     io.hass.image.licenses="APACHE2.0" \
     io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
@@ -24,7 +21,7 @@ RUN set -x \
     && apk update \
     && apk add --no-cache sudo sed iproute2 cmake build-base \
     gawk git jq socat nginx php-fpm ninja zip unzip curl \
-    libuv-dev zlib-dev linux-headers openssl-dev
+    libuv-dev zlib-dev linux-headers openssl-dev doxygen graphviz
 
 # Setup NGINX.
 RUN set -x \
@@ -55,25 +52,24 @@ RUN set -x \
     && unzip "v${ZTVERSION}.zip" \
     && sed -i 's/arm-linux-gnueabihf/armv7-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
-    && sed -i 's/arm64/aarch64/' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
-    && sed -i 's/arm/aarch64/' "${ZITI_ROOT}/vcpkg/triplets/community/arm-linux.cmake" \
+    && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
+    && sed -i 's/arm/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm-linux.cmake" \
+    && sed -i '4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/x64-linux.cmake" \
     && cmake \
-        --fresh \
-        -DGIT_VERSION="${ZTVERSION}" \
-        -DTLSUV_TLSLIB="openssl" \
-        -DHAVE_LIBSODIUM="ON" \
-        -DDISABLE_LIBSYSTEMD_FEATURE="ON" \
-        --preset "${CMAKE_PRESET:-ci-linux-x64}" \
-        -DBUILD_DIST_PACKAGES="OFF" \
-        -S "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}" \
-        -B "${ZITIBUILD_ROOT}" \
+    --fresh \
+    -DGIT_VERSION="${ZTVERSION}" \
+    -DTLSUV_TLSLIB="openssl" \
+    -DHAVE_LIBSODIUM="ON" \
+    -DDISABLE_LIBSYSTEMD_FEATURE="ON" \
+    --preset "${CMAKE_PRESET:-ci-linux-x64}-static-libssl" \
+    -DBUILD_DIST_PACKAGES="OFF" \
+    -S "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}" \
+    -B "${ZITIBUILD_ROOT}" \
+    && sed -i '/Ziti C SDK version/i ZITI_LOG(INFO, "Welcome to Ziti - Home Assistant Edition - Version '"${BUILD_VERSION}"'");' "${ZITIBUILD_ROOT}/_deps/ziti-sdk-c-src/library/utils.c" \
     && cmake \
-        -E make_directory \
-        "${ZITIBUILD_ROOT}" \
-    && cmake \
-        --build "${ZITIBUILD_ROOT}" \
-        --config "Release" \
-        --target "ziti-edge-tunnel" \
+    --build "${ZITIBUILD_ROOT}" \
+    --config "Release" \
+    --target "ziti-edge-tunnel" \
     && mv -vf "${ZITIBUILD_ROOT}/programs/ziti-edge-tunnel/Release/ziti-edge-tunnel" "${ZITI_ROOT}" \
     && rm -rf "v${ZTVERSION}.zip" "ziti-tunnel-sdk-c-${ZTVERSION}" "${ZITIBUILD_ROOT}" "${VCPKG_ROOT}" \
     && echo 'ziti:x:99:' >> "/etc/group"

@@ -17,8 +17,9 @@ configuration:
     name: Log Level
     description: >-
       [OPTIONAL]
-      A numeric value between (1/INFO/LOWEST) and (6/DEBUG/HIGHEST).
-      If not present, will default to (2).
+      A numeric value between (1/LOWEST) and (6/HIGHEST).
+      Levels are (1/ERROR, 2/WARN, 3/INFO, 4/DEBUG, 5/VERBOSE, 6/TRACE).
+      If not present, will default to (3).
   UpstreamResolver:
     name: Upstream Resolver
     description: >-
