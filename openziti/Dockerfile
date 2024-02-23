@@ -64,7 +64,7 @@ RUN set -x \
         -DTLSUV_TLSLIB="openssl" \
         -DHAVE_LIBSODIUM="ON" \
         -DDISABLE_LIBSYSTEMD_FEATURE="ON" \
-        --preset "${CMAKE_PRESET:-ci-linux-x64}-static-libssl" \
+        --preset "${CMAKE_PRESET:-ci-linux-x64}" \
         -DBUILD_DIST_PACKAGES="OFF" \
         -S "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}" \
         -B "${ZITIBUILD_ROOT}" \
