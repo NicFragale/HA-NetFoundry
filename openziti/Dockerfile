@@ -55,9 +55,8 @@ RUN set -x \
     && unzip "v${ZTVERSION}.zip" \
     && sed -i 's/arm-linux-gnueabihf/armv7-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
-    && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
-    && sed -i 's/arm/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/community/arm-linux.cmake" \
-    && sed -i '4i set(VCPKG_BUILD_TYPE release)' "${ZITI_ROOT}/vcpkg/triplets/x64-linux.cmake" \
+    && sed -i 's/arm64/aarch64/' "${ZITI_ROOT}/vcpkg/triplets/community/arm64-linux.cmake" \
+    && sed -i 's/arm/aarch64/' "${ZITI_ROOT}/vcpkg/triplets/community/arm-linux.cmake" \
     && cmake \
         --fresh \
         -DGIT_VERSION="${ZTVERSION}" \
