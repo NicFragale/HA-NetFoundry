@@ -29,7 +29,7 @@ LABEL \
 RUN \
     apk add --no-cache \
         sudo sed iproute2 cmake build-base \
-        gawk git jq socat nginx php-fpm ninja zip unzip curl \
+        gawk git jq socat nginx php-fpm ninja zip unzip curl perl \
         libuv-dev zlib-dev linux-headers openssl-dev doxygen graphviz \
     && mkdir -vp '/var/run/nginx' '/var/run/php' '/var/www/html/images' \
     && sed -i \
