@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.5
+
+- Fixes issues with the new builder - a new build system has been implemented.
+- Updates to OpenZiti (TUN v0.22.23, CSDK v0.36.6) - PINNED.
+- Internally utilizes a different build base from (ghcr.io/hassio-addons/base).
+
 ## 1.5.4
 
 - Refactor the method by which building of ZET occurs so it is faster.

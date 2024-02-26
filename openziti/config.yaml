@@ -1,6 +1,6 @@
 name: "OpenZiti by NetFoundry"
 description: "Zero Trust Application Specific Networking"
-version: "1.5.4"
+version: "1.5.5.4"
 slug: "openziti"
 # To build locally on your platform, comment "image" and "url" out.
 url: "https://github.com/openziti"
@@ -11,29 +11,28 @@ init: false
 arch:
   - aarch64
   - amd64
+  - armhf
   - armv7
   - i386
-  - armhf
 panel_icon: mdi:lightning-bolt-circle
 panel_title: "OpenZiti"
 ingress: true
 ingress_port: 8099
 ingress_entry: index.php
 ingress_stream: true
-hassio_api: true
 hassio_role: manager
-host_dbus: true
+hassio_api: true
 host_network: true
+host_dbus: true
 network_mode: host
 host_ipc: true
 map:
   - share:rw
 privileged:
   - NET_ADMIN
+  - NET_RAW
 devices:
   - /dev/net/tun
-volumes:
-  - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
 options:
   EnrollmentJWT: "UNSET"
   IdentityDirectory: "DEFAULT"
