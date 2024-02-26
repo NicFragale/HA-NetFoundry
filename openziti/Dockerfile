@@ -15,7 +15,7 @@ ARG BUILD_ARCH BUILD_VERSION CLIVERSION ZTVERSION ZTBRANCHOVERRIDE
 LABEL \
     io.hass.name="OpenZiti by NetFoundry" \
     io.hass.description="True zero trust networking." \
-    io.hass.arch="armhf|aarch64|amd64" \
+    io.hass.arch="armhf|armv7|aarch64|amd64|i386" \
     io.hass.type="addon" \
     io.hass.image.licenses="APACHE2.0" \
     io.hass.image.url="https://github.com/NicFragale/HA-NetFoundry" \
