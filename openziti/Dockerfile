@@ -28,7 +28,7 @@ LABEL \
 # 4. Add the Home Assistant CLI.
 RUN \
     apk add --no-cache \
-        sudo sed iproute2 cmake build-base \
+        sudo sed iproute2 cmake build-base linux-headers \
         gawk git jq socat nginx php-fpm ninja zip unzip curl perl \
         libuv-dev zlib-dev linux-headers openssl-dev doxygen graphviz \
     && mkdir -vp '/var/run/nginx' '/var/run/php' '/var/www/html/images' \
@@ -39,9 +39,10 @@ RUN \
         -e 's/nobody/nginx/g' /etc/php*/php-fpm.d/www.conf \
     && echo -e "nginx ALL = (root) NOPASSWD: /opt/openziti/scripts/infodisplay.sh\nnginx ALL = (root) NOPASSWD: /opt/openziti/scripts/zetdisplay.sh\n" >> /etc/sudoers \
     && export HOME="/root" \
+    && export PATH="${PATH}:/usr/bin" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "aarch64" ]] && echo "ci-linux-arm64")" \
     && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "armv7" ]] && echo "ci-linux-arm")" \
-    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "armhf" ]] && echo "ci-linux-arm")" \
+    && export CMAKE_PRESET="$([[ -z "${CMAKE_PRESET}" ]] && [[ "${BUILD_ARCH}" == "amd64" ]] && echo "ci-linux-x64")" \
     && export VCPKG_FORCE_SYSTEM_BINARIES="1" \
     && export ZITI_ROOT="/opt/openziti" \
     && export ZITIBUILD_ROOT="${ZITI_ROOT}/build" \
@@ -54,12 +55,13 @@ RUN \
     && ZTVERSION="${ZTVERSION:-$(curl -Ls 'https://github.com/openziti/ziti-tunnel-sdk-c/tags' | awk '/tags/{if(match($0,/v[0-9].[0-9]+.[0-9]+/)){ALLVERSIONS[substr($0,RSTART,RLENGTH)]++}}END{for(EACHVERSION in ALLVERSIONS){gsub("v","",EACHVERSION);print EACHVERSION}}' | sort -rnt '.' -k1,1 -k2,2 -k3,3 | head -n1)}" \
     && curl -Lso "v${ZTVERSION}.zip" "${ZTBRANCHOVERRIDE:-https://github.com/openziti/ziti-tunnel-sdk-c/archive/refs/tags/v${ZTVERSION}.zip}" \
     && unzip "v${ZTVERSION}.zip" \
-    && sed -i 's/arm-linux-gnueabihf/armv7-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
+    && sed -i 's/arm-linux-gnueabihf/armv6-alpine-linux-musleabihf/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm.cmake" \
     && sed -i 's/aarch64-linux-gnu/aarch64-alpine-linux-musl/' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/toolchains/Linux-arm64.cmake" \
     && sed -i 's/arm64/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${VCPKG_ROOT}/triplets/community/arm64-linux.cmake" \
     && sed -i 's/arm/aarch64/; 4i set(VCPKG_BUILD_TYPE release)' "${VCPKG_ROOT}/triplets/community/arm-linux.cmake" \
     && sed -i '4i set(VCPKG_BUILD_TYPE release)' "${VCPKG_ROOT}/triplets/x64-linux.cmake" \
     && sed -i '/attempting copy/d; /copy successful/d' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/programs/ziti-edge-tunnel/netif_driver/linux/resolvers.c" \
+    && sed -i '/"mbedtls",/d' "${ZITI_ROOT}/ziti-tunnel-sdk-c-${ZTVERSION}/vcpkg.json" \
     && cmake \
         --fresh \
         -DGIT_VERSION="${ZTVERSION}" \

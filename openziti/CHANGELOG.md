@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.6
+
+- Updates to OpenZiti (TUN v0.22.24, CSDK v0.36.7) - PINNED.
+- Updates the logo icon to the new style.
+- ARMHF support added back.
+
 ## 1.5.5
 
 - Fixes issues with the new builder - a new build system has been implemented.

@@ -4,7 +4,7 @@ build_from:
   armv7: "ghcr.io/hassio-addons/base/armv7:15.0.7"
 args:
   CLIVERSION: ""
-  ZTVERSION: "0.22.3"
+  ZTVERSION: "0.22.24"
   ZTBRANCHOVERRIDE: ""
 codenotary:
   signer: "nicfragale+cas@gmail.com"
