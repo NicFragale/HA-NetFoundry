@@ -205,9 +205,9 @@ function FX_HABootstraper() {
         && apk add bash \
         && sed -i 's|^\(root:.*:/bin/\)sh$|\1bash|' /etc/passwd \
         && echo 'source <([ ! -f '"${HAHELPER:=/etc/profile.d/HAHelper.sh}"' ] \
-            && curl -s https://raw.githubusercontent.com/NicFragale/HA-NetFoundry/main/HAHelper.sh -o ${HAHELPER} \
-            && cat ${HAHELPER} \
-            || cat ${HAHELPER}) # HAHelper_Bootstrapper
+            && curl -s https://raw.githubusercontent.com/NicFragale/HA-NetFoundry/main/HAHelper.sh -o '"${HAHELPER}"' \
+            && cat '"${HAHELPER}"' \
+            || cat '"${HAHELPER}"') # HAHelper_Bootstrapper
         ' >> "${MOTD}" \
         && echo ">SUCCESS - LOGOUT AND LOGIN AGAIN<" \
         || echo ">ERROR<"
