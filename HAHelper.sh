@@ -3,7 +3,6 @@
 # HAHelper - A helper utility that adds functions and variables to the HA shell.
 # 20231030 Written by Nic Fragale.
 ###################################################################################################################
-
 #######################################################################################
 # Variables and Aliases
 #######################################################################################
@@ -197,6 +196,21 @@ function FX_GetContainers() {
     for EachID in $(docker ps -q); do
         ContainerInfo[$(docker inspect -f '{{.Name}}' ${EachID} | sed 's/\///')]="${EachID}"
     done
+}
+
+#######################################################################################
+# Bootstrapper.
+function FX_HABootstraper() {
+    ! grep -q "HAHelper_Bootstrapper" "${MOTD:=/etc/profile.d/show_motd.sh}" 2>/dev/null \
+        && apk add bash \
+        && sed -i 's|^\(root:.*:/bin/\)sh$|\1bash|' /etc/passwd \
+        && echo 'source <([ ! -f '"${HAHELPER:=/etc/profile.d/HAHelper.sh}"' ] \
+            && curl -s https://raw.githubusercontent.com/NicFragale/HA-NetFoundry/main/HAHelper.sh -o ${HAHELPER} \
+            && cat ${HAHELPER} \
+            || cat ${HAHELPER}) # HAHelper_Bootstrapper
+        ' >> "${MOTD}" \
+        && echo ">SUCCESS - LOGOUT AND LOGIN AGAIN<" \
+        || echo ">ERROR<"
 }
 
 #######################################################################################
