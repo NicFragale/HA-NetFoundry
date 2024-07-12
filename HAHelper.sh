@@ -204,7 +204,7 @@ function FX_HABootstraper() {
     ! grep -q "HAHelper_Bootstrapper" "${MOTD:=/etc/profile.d/show_motd.sh}" 2>/dev/null \
         && apk add bash \
         && sed -i 's|^\(root:.*:/bin/\)sh$|\1bash|' /etc/passwd \
-        && echo 'source <([ ! -f '"${HAHELPER:=/etc/profile.d/HAHelper.sh}"' ] \
+        && echo -e '\nsource <([ ! -f '"${HAHELPER:=/etc/profile.d/HAHelper.sh}"' ] \
             && curl -s https://raw.githubusercontent.com/NicFragale/HA-NetFoundry/main/HAHelper.sh -o '"${HAHELPER}"' \
             && cat '"${HAHELPER}"' \
             || cat '"${HAHELPER}"') # HAHelper_Bootstrapper
