@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0
+
+- Updates to OpenZiti (TSDK v1.0.3, CSDK v1.0.4) - PINNED.
+- Updates to the visualizer dash to show current connections inbound.
+
 ## 1.5.6
 
 - Updates to OpenZiti (TUN v0.22.24, CSDK v0.36.7) - PINNED.

@@ -22,7 +22,7 @@ ZitiLogo=(
     '██ ██  ██ █████      ██    █████   ██    ██ ██    ██ ██ ██  ██ ██   ██ ██████    ████  '
     '██  ██ ██ ██         ██    ██      ██    ██ ██    ██ ██  ██ ██ ██   ██ ██   ██    ██   '
     '██   ████ ███████    ██    ██       ██████   ██████  ██   ████ ██████  ██   ██    ██   '
-    '                       BETA: THIS IS A WORK IN PROGRESS                                ')
+    '                                         BETA                                          ')
 ZETVersion="$(/opt/openziti/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
 
 if [[ ${ShowMode} == "FULLDETAIL" ]]; then
