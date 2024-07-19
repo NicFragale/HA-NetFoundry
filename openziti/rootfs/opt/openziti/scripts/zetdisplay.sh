@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bashio
 ####################################################################################################
-# 20230428 - Written by Nic Fragale @ NetFoundry.
+# 20240701 - Written by Nic Fragale @ NetFoundry.
 MyName="zetdisplay.sh"
 MyPurpose="Ziti-Edge-Tunnel Runtime Display."
 ####################################################################################################
@@ -124,7 +124,7 @@ function ZET_Status() {
 					} else if (SAVE_SWITCHING == "CONNECTIONS" ) {
 						CONNECTION_REPORT[++CONNECTION_COUNTER]=CONNECTION_NUMBER","CONNECTION_SERVICENAME","CONNECTION_TERMINATORS
 					} else if (SAVE_SWITCHING == "CHILDREN" ) {
-						CHILDREN_REPORT[++CHILD_COUNTER]=CONNECTION_CHILDTOCONNECTIONNUMBER","CONNECTION_CHILDNUMBER","toupper(CONNECTION_CHILDSTATE)","CONNECTION_CHILDCALLERID","CONNECTION_CHILDCHANNELROUTER
+						CHILDREN_REPORT[++CHILD_COUNTER]=CONNECTION_CHILDTOCONNECTIONNUMBER","CONNECTION_CHILDNUMBER","toupper(CONNECTION_CHILDSTATE)","CONNECTION_CHILDCALLERID","CONNECTION_CHILDCHANNELROUTER","CONNECTION_CHILDINFO_A","CONNECTION_CHILDINFO_B
 					} else if (SAVE_SWITCHING == "CHANNELS" ) {
 						CHANNEL_REPORT[++CHANNEL_COUNTER]=CHANNEL_NUMBER","CHANNEL_ROUTER","toupper(CHANNEL_STATE)","CHANNEL_LATENCY
 					} else if (SAVE_SWITCHING == "NETSESSIONS" ) {
@@ -310,10 +310,14 @@ function ZET_Status() {
 					} else if (/child\[.*\]/) {
 
 						CONNECTION_CHILDTOCONNECTIONNUMBER=CONNECTION_NUMBER
-						CONNECTION_CHILDNUMBER=gensub(/.*child\[(.*)\]:.*/,"\\1","1")
+						CONNECTION_CHILDNUMBER=gensub(/.*child\[(.*)\/-\]:.*/,"\\1","1")
 						CONNECTION_CHILDSTATE=gensub(/.*state\[(.*)\] caller_id.*/,"\\1","1")
 						CONNECTION_CHILDCALLERID=gensub(/.*caller_id\[(.*)\] ch.*/,"\\1","1")
-						CONNECTION_CHILDCHANNELROUTER=gensub(/.*ch\[(.*)\] .*/,"\\1","1")
+						CONNECTION_CHILDCHANNELROUTER=gensub(/.*ch\[(.*)\/.*\]/,"\\1","1")
+						getline
+						CONNECTION_CHILDINFO_A=gensub(/^[[:blank:]]+(.*)/,"\\1","1")
+						getline
+						CONNECTION_CHILDINFO_B=gensub(/^[[:blank:]]+bridge: (.*)/,"\\1","1")
 						READYSAVE("CHILDREN")
 
 					# CHANNELS SECTION #
@@ -443,15 +447,15 @@ function ZET_Status() {
 							# CONNECTIONS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELTERMINATORS
 							split(CONNECTION_REPORT[EACH_CONNECTION],PRINT_CONNECTION,",")
 
-							PRINTLINE("DOUBLELBR","NONE","NONE"," ","CONNECTION",PRINT_CONNECTION[1]" (TERMINATORS="PRINT_CONNECTION[3]")")
-
 							# Match CONNECTION_SERVICENAME to current SERVICE_NAME.
 							if (PRINT_SERVICE[3] == PRINT_CONNECTION[2]) {
+
+								PRINTLINE("DOUBLELBR","NONE","NONE"," ","CONNECTION",PRINT_CONNECTION[1]" (TERMINATORS="PRINT_CONNECTION[3]")")
 
 								# For every CONNECTION, loop all CHILDREN.
 								for (EACH_CHILD in CHILDREN_REPORT) {
 
-									# CHILDREN # [1]=CHILDCONNECTIONNUMBER,[2]=CHILDNUMBER,[3]=CHILDSTATE,[4]=CHILDCALLERID,[5]=CHILDCHANNELROUTER
+									# CHILDREN # [1]=CHILDCONNECTIONNUMBER,[2]=CHILDNUMBER,[3]=CHILDSTATE,[4]=CHILDCALLERID,[5]=CHILDCHANNELROUTER,[6]=CHILDINFOA,[7]CHILDINFOB
 									split(CHILDREN_REPORT[EACH_CHILD],PRINT_CHILD,",")
 
 									# Match CHILD_CONNECTIONNUMBER to current CONNECTION_NUMBER.
@@ -494,15 +498,17 @@ function ZET_Status() {
 												# Match the CONNECTION_STATE, and print the information.
 												split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
 												if (PRINT_CHILD[3] == "CONNECTED" || PRINT_CHILD[3] == "ACCEPTING") {
-													PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+													PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CHILD[3],"CHILD","#"PRINT_CHILD[2])
 												} else if (PRINT_CHILD[3] == "DISCONNECTED" || PRINT_CHILD[3] == "TIMEDOUT") {
-													PRINTLINE("BRANCHNORMAL","WHITE","RED",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+													PRINTLINE("BRANCHNORMAL","WHITE","RED",PRINT_CHILD[3],"CHILD","#"PRINT_CHILD[2])
 												} else {
-													PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CHILD[3],"CONNECTION","CHILD #"PRINT_CHILD[2])
+													PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CHILD[3],"CHILD","#"PRINT_CHILD[2])
 												}
 												PRINTLINE("DOUBLELBR","NONE","NONE"," ","CHANNEL",PRINT_CHANNELPARTS[1])
 												PRINTLINE("DOUBLELBR","NONE","NONE"," ","AT",PRINT_CHANNELPARTS[2])
 												PRINTLINE("DOUBLELBR","NONE","NONE"," ","LATENCY",PRINT_CHANNEL[4])
+												PRINTLINE("DOUBLELBR","NONE","NONE"," ","TIMING_DATA",PRINT_CHILD[6])
+												PRINTLINE("DOUBLELBR","NONE","NONE"," ","BRIDGE_INFO",PRINT_CHILD[7])
 												break
 
 											}
