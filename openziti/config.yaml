@@ -34,6 +34,7 @@ privileged:
 devices:
   - /dev/net/tun
 options:
+  EnrollmentJWT: "UNSET"
   IdentityDirectory: "DEFAULT"
   LogLevel: "DEFAULT"
   UpstreamResolver: "DEFAULT"
