@@ -27,6 +27,9 @@ function CheckWait() {
             if [[ "${EachLine/${EachLine/nameserver 100.64/}/}" == "nameserver 100.64" ]]; then
                 NEWRESOLV="${NEWRESOLV}\n#${EachLine}"
                 RESOLVBOOL="TRUE"
+                # Set the system first resolver to ZITI.
+                bashio::log.info "ZITI_DNS_IP: ${EachLine/nameserver /}"
+                SetSystemResolver "${EachLine/nameserver /}"
             else
                 NEWRESOLV="${NEWRESOLV}\n${EachLine}"
             fi
@@ -69,19 +72,40 @@ function ObtainIPInfo() {
     local RAWADDRESS IP1 IP2 IP3 IP4 MASK1 MASK2 MASK3 MASK4
 
     # Check for proper input.
-    [[ "${INPUTADDRESS%/*}" == "${INPUTADDRESS#*/}" ]] &&
+    if [[ "${INPUTADDRESS%/*}" == "${INPUTADDRESS#*/}" ]]; then
         return 1
+    fi
 
-    INPUTADDRESS=("${INPUTADDRESS%/*}" "${INPUTADDRESS#*/}")
-    RAWADDRESS=$((0xffffffff ^ ((1 << (32 - INPUTADDRESS[1])) - 1)))
-    IFS=. read -r IP1 IP2 IP3 IP4 <<<"${INPUTADDRESS[0]}"
-    IFS=. read -r MASK1 MASK2 MASK3 MASK4 <<<"$(((RAWADDRESS >> 24) & 0xff)).$(((RAWADDRESS >> 16) & 0xff)).$(((RAWADDRESS >> 8) & 0xff)).$((RAWADDRESS & 0xff))"
+    # Split INPUTADDRESS into IP and CIDR mask
+    IFS='/' read -r IP CIDR <<< "${INPUTADDRESS}"
 
+    # Calculate the raw subnet mask from the CIDR
+    RAWADDRESS=$((((0xffffffff ^ ((1 << (32 - CIDR)) - 1)))))
+
+    # Split IP into octets
+    IFS='.' read -r IP1 IP2 IP3 IP4 <<< "${IP}"
+
+    # Calculate the subnet mask octets
+    IFS='.' read -r MASK1 MASK2 MASK3 MASK4 <<< "$(((RAWADDRESS >> 24) & 0xff)).$(((RAWADDRESS >> 16) & 0xff)).$(((RAWADDRESS >> 8) & 0xff)).$((RAWADDRESS & 0xff))"
+
+    # Determine the output based on OUTPUTTYPE
     case ${OUTPUTTYPE} in
-        "NETWORK") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$((IP4 & MASK4))" ;;
-        "BROADCAST") echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP3 & MASK3 | 255 - MASK3)).$((IP4 & MASK4 | 255 - MASK4))" ;;
-        "FIRSTIP") echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$(((IP4 & MASK4) + 1))" ;;
-        "LASTIP") echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP & MASK3 | 255 - MASK3)).$(((IP4 & MASK4 | 255 - MASK4) - 1))" ;;
+        "NETWORK")
+            echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$((IP4 & MASK4))"
+            ;;
+        "BROADCAST")
+            echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP3 & MASK3 | 255 - MASK3)).$((IP4 & MASK4 | 255 - MASK4))"
+            ;;
+        "FIRSTIP")
+            echo "$((IP1 & MASK1)).$((IP2 & MASK2)).$((IP3 & MASK3)).$(((IP4 & MASK4) + 1))"
+            ;;
+        "LASTIP")
+            echo "$((IP1 & MASK1 | 255 - MASK1)).$((IP2 & MASK2 | 255 - MASK2)).$((IP3 & MASK3 | 255 - MASK3)).$(((IP4 & MASK4 | 255 - MASK4) - 1))"
+            ;;
+        *)
+            echo "Invalid OUTPUTTYPE specified."
+            return 1
+            ;;
     esac
 }
 
@@ -160,7 +184,7 @@ function IdentityCheck() {
 # 1/IDENTITYDIRECTORY, 2/RESOLUTIONRANGE, 3/UPSTREAMRESOLVER, 4/LOGLEVEL, 5/ENROLLJWT
 IDENTITYDIRECTORY="${1:-/share/openziti/identities}"
 RESOLUTIONRANGE="${2:-100.64.64.0/18}"
-ZITI_DNS_IP="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
+#ZITI_DNS_IP="$(ObtainIPInfo "${RESOLUTIONRANGE}" "FIRSTIP")"
 UPSTREAMRESOLVER="${3:-1.1.1.1}"
 LOGLEVEL="${4:-2}"
 ENROLLJWT="${5:-UNSET}"
@@ -187,12 +211,6 @@ fi
 
 # Check for available identities.
 IdentityCheck "${IDENTITYDIRECTORY}"
-
-# Ensure existing configuration is saved for reinstallation later.
-bashio::log.info "ZITI_DNS_IP: ${ZITI_DNS_IP:-ERROR}"
-
-# Set the system first resolver to ZITI.
-SetSystemResolver "${ZITI_DNS_IP}"
 
 # Startup of assisting binaries.
 for ((i = 0; i < ${#ASSISTAPPBINARIES[*]}; i++)); do

@@ -22,11 +22,13 @@ ZitiLogo=(
     '██ ██  ██ █████      ██    █████   ██    ██ ██    ██ ██ ██  ██ ██   ██ ██████    ████  '
     '██  ██ ██ ██         ██    ██      ██    ██ ██    ██ ██  ██ ██ ██   ██ ██   ██    ██   '
     '██   ████ ███████    ██    ██       ██████   ██████  ██   ████ ██████  ██   ██    ██   '
-    '                                         BETA                                          ')
+    '                       ZERO TRUST NETWORKING FOR HOME ASSISTANT                        ')
 ZETVersion="$(/opt/openziti/ziti-edge-tunnel version 2>/dev/null || echo UNKNOWN)"
+HACLIInfo="$(ha cli info | awk '/version:/{print $2}' || echo UNKNOWN)"
+readarray -t HADNSInfo < <(/usr/bin/ha dns info 2>/dev/null || echo UNKNOWN)
 
 if [[ ${ShowMode} == "FULLDETAIL" ]]; then
-    for ((i = 0; i < ${#ZitiLogo[*]}; i++)); do
+    for ((i=0; i<${#ZitiLogo[*]}; i++)); do
         printf "%s\n" "${ZitiLogo[${i}]}"
     done
     echo
@@ -34,12 +36,10 @@ if [[ ${ShowMode} == "FULLDETAIL" ]]; then
     printf "\n%-30s: %s\n" "Ziti-Edge-Tunnel Version" "${ZETVersion}"
     echo
 
-    HACLIInfo="$(ha cli info | awk '/version:/{print $2}' || echo UNKNOWN)"
     printf "%-30s: %s\n" "Home Assistant CLI Version" "${HACLIInfo}"
     echo
 
-    readarray -t HADNSInfo < <(/usr/bin/ha dns info 2>/dev/null || echo UNKNOWN)
-    for ((i = 0; i < ${#HADNSInfo[*]}; i++)); do
+    for ((i=0; i<${#HADNSInfo[*]}; i++)); do
         printf "%-30s: %s\n" "Home Assistant DNS Info [${i}]" "${HADNSInfo[${i}]}"
     done
     echo
@@ -48,6 +48,8 @@ else
     for ((i = 0; i < ${#ZitiLogo[*]}; i++)); do
         printf "<span>%s</span><br>" "${ZitiLogo[${i}]// /\&nbsp}"
     done
-    printf "</span><hr>"
-    printf "<span id=\"OPENZITIVERSION\" class=\"FULLWIDTH BG-LTGREY ANIMATED T500MS\">Ziti-Edge-Tunnel: %s</span>" "v${ZETVersion}"
+    printf "</span><span id=\"SYSTEMINFO\" class=\"FULLWIDTH FG-BOLD ANIMATED T500MS\"><hr>"
+    printf "Ziti-Edge-Tunnel: %s<br>" "v${ZETVersion}"
+    printf "Home Assistant CLI: %s" "v${HACLIInfo}"
+    printf "</span>"
 fi

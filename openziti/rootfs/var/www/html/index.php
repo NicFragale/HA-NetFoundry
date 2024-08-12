@@ -135,15 +135,15 @@
                             $("#INFOLOAD").slideDown(1000);
                             UpdatePageColors();
                             setTimeout(function() {
+                                $("#SYSTEMINFO").slideUp().addClass('NOTVISIBLE');
                                 $("#OPENZITITEXT").slideUp();
                                 $("#BODYIMG").removeClass("OPACITY-C").addClass("OPACITY-D");
-                                $("#OPENZITIVERSION").addClass("FG-BOLD FG-LARGE FG-BLUE");
                                 $("body").on("click", function() {
                                     $("#ZETLOADSTATUS").fadeToggle().promise().done(function() {
                                         $("#ZETLOADSTATUS").toggleClass("NOTVISIBLE");
                                     });
                                 });
-                                console.log("SENT_A");
+                                //console.log("SENT_A");
                             }, 8000);
                         });
                     }

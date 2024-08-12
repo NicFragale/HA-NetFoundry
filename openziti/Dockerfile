@@ -27,8 +27,8 @@ LABEL \
 # 3. Build and setup OpenZiti.
 # 4. Add the Home Assistant CLI.
 RUN \
-    apk add --no-cache \
-        sudo sed iproute2 cmake build-base linux-headers \
+    apk add --update --no-cache \
+        sudo sed iproute2 cmake build-base linux-headers bind-tools \
         gawk git jq socat nginx php-fpm ninja zip unzip curl perl \
         libuv-dev zlib-dev linux-headers openssl-dev doxygen graphviz \
     && mkdir -vp '/var/run/nginx' '/var/run/php' '/var/www/html/images' \

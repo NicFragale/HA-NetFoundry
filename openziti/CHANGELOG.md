@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1
+
+- Updates to OpenZiti (TSDK v1.1.0, CSDK v1.0.7) - PINNED.
+- Major re-writes to the visualizer for robustness and error prevention.
+- DNS bug was addressed which affects local resolution.
+- General bug fixes and improvements.
+
 ## 1.6.0
 
 - Updates to OpenZiti (TSDK v1.0.3, CSDK v1.0.4) - PINNED.
