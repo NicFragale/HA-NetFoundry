@@ -2,7 +2,7 @@
 # 20240701 - Written by Nic Fragale @ NetFoundry.
 ####################################################################################################
 # Utilize the build image that is appropriate.
-ARG BUILD_FROM
+ARG BUILD_FROM="ghcr.io/hassio-addons/base:83eeac4"
 FROM $BUILD_FROM
 
 # Set the shell.

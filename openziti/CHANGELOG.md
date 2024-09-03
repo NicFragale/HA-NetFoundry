@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.2
+
+- Updates to OpenZiti (TSDK v1.1.3, CSDK v1.0.9) - PINNED.
+- Changes the default entrypoint for the web status service.
+- New logo.
+- General bug fixes and improvements.
+
 ## 1.6.1
 
 - Updates to OpenZiti (TSDK v1.1.0, CSDK v1.0.7) - PINNED.
