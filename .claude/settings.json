@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/nicfragale/Desktop/Work/Development/HomeAssistant/HA-NetFoundry log --oneline --all -- openziti/stc-overlay)"
+    ]
+  }
+}
