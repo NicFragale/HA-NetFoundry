@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0
+- Updates to OpenZiti (TSDK v1.15.1, CSDK v1.15.0) - PINNED.
+- REMOVES SUPPORT for armhf, armv7, i386.
+- Builder bugfixes and robustness.
+
 ## 1.6.2
 
 - Updates to OpenZiti (TSDK v1.1.3, CSDK v1.0.9) - PINNED.
