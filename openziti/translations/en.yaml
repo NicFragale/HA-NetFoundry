@@ -30,4 +30,4 @@ configuration:
     description: >-
       [OPTIONAL]
       Informs the Ziti-Edge-Tunnel runtime that it should utilize a specific range of IPs for internal redirection of assigned services.
-      If not present, will default to (100.64.64.0/18).
+      If not present, will default to (100.64.64.0/24).

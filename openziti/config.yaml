@@ -1,6 +1,6 @@
 name: "OpenZiti by NetFoundry"
 description: "Zero Trust Application Specific Networking"
-version: "1.7.0"
+version: "1.7.1"
 slug: "openziti"
 # To build locally on your platform, comment "image" and "url" out.
 url: "https://github.com/openziti"
@@ -33,10 +33,10 @@ options:
   IdentityDirectory: "DEFAULT"
   LogLevel: "DEFAULT"
   UpstreamResolver: "DEFAULT"
-  ResolutionRange: "100.64.64.0/18"
+  ResolutionRange: "100.64.64.0/24"
 schema:
   EnrollmentJWT: str?
   IdentityDirectory: str?
   LogLevel: list(1|2|DEFAULT|4|5|6)?
   UpstreamResolver: str?
-  ResolutionRange: list(100.64.0.0/18|100.64.64.0/18)?
+  ResolutionRange: str?

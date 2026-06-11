@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bashio
 ####################################################################################################
-# 20230119 - Written by Nic Fragale @ NetFoundry.
+# 20260601 - Written by Nic Fragale @ NetFoundry.
 MyName="run"
 MyPurpose="Ziti-Edge-Tunnel Runtime Script for Home Assistant."
 ####################################################################################################
@@ -19,7 +19,7 @@ IdentityDirectory="$(bashio::config 'IdentityDirectory')"
 
 ResolutionRange="$(bashio::config 'ResolutionRange')"
 [[ ${ResolutionRange:=DEFAULT} == "DEFAULT" ]] &&
-        ResolutionRange="100.64.64.0/18"
+        ResolutionRange="100.64.64.0/24"
 
 UpstreamResolver="$(bashio::config 'UpstreamResolver')"
 [[ ${UpstreamResolver:=DEFAULT} == "DEFAULT" ]] &&

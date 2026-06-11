@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bashio
 ####################################################################################################
-# 20240701 - Written by Nic Fragale @ NetFoundry.
+# 20260601 - Written by Nic Fragale @ NetFoundry.
 MyName="zetdisplay.sh"
 MyPurpose="Ziti-Edge-Tunnel Runtime Display."
 ####################################################################################################
@@ -8,10 +8,6 @@ MyPurpose="Ziti-Edge-Tunnel Runtime Display."
 [[ ${ZITI_ENV_LOG:-INFO} == "DEBUG" ]] &&
 	bashio::log.info "MyName: ${MyName}" &&
 	bashio::log.info "MyPurpose: ${MyPurpose}"
-
-####################################################################################################
-#echo "${QueryCommand}" | socat - UNIX-CONNECT:"${ZETSock}" >/dev/null && ./a.awk "/tmp/.ziti/*".ziti
-####################################################################################################
 
 ####################################################################################################
 # Functions
@@ -27,7 +23,7 @@ function ZET_Status() {
 		if [[ -e ${ZETSock} ]]; then
 			ZETSocksDir="${ZETSock%\/*}"
 		else
-			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The ZITI-EDGE-TUNNEL socket is not available. Please wait or restart."
+			printf "<div class=\"summary-row\"><div class=\"stat-card stat-card-error\"><div class=\"stat-label\">ZET Status</div><div class=\"stat-card-value\"><span class=\"FG-BLACK BG-YELLOW\">Socket not found &mdash; please wait or restart.</span></div></div></div>"
 			return
 		fi
 	fi
@@ -35,61 +31,51 @@ function ZET_Status() {
 	# Set the directory to work from.
 	local QueryCommand="{\"Command\":\"ZitiDump\",\"Data\":{\"DumpPath\":\"${ZETSocksDir}\"}}"
 
+	# Session history: completed bytes by service; active snapshot: per-child bytes from last poll.
+	local ZETHistFile="${ZETSocksDir}/zt-session-history.log"
+	local ZETActiveFile="${ZETSocksDir}/zt-session-active.log"
+	# Bump sentinel to v3 — resets files for the per-child-ID tracking design.
+	local ZETHistGen="${ZETSocksDir}/zt-history-gen-v3"
+	if [[ ! -f "${ZETHistGen}" ]]; then
+		rm -f "${ZETHistFile}" "${ZETActiveFile}" "${ZETSocksDir}/zt-history-gen" "${ZETSocksDir}/zt-history-gen-v2" 2>/dev/null
+		touch "${ZETHistFile}" "${ZETActiveFile}" "${ZETHistGen}" 2>/dev/null
+	fi
+	touch "${ZETHistFile}" "${ZETActiveFile}" 2>/dev/null
+
+	# Clean up any stale dump files before requesting a fresh one.
+	rm -f "${ZETSocksDir}"/*.ziti 2>/dev/null
+
 	# Check for the presence of the socket that ZET creates when running.
 	if [[ -e "${ZETSock}" ]]; then
 
-		# Send the command to the ZET socket and get the result.
-		echo "${QueryCommand}" | socat - UNIX-CONNECT:"${ZETSock}" >/dev/null
-		readarray -t ZETResults < <(find "${ZETSocksDir}"/*.ziti -type f 2>/dev/null)
+		# Send the command to the ZET socket (with timeout to avoid hanging).
+		if ! echo "${QueryCommand}" | timeout 5 socat - UNIX-CONNECT:"${ZETSock}" >/dev/null 2>&1; then
+			printf "<div class=\"summary-row\"><div class=\"stat-card stat-card-error\"><div class=\"stat-label\">ZET Status</div><div class=\"stat-card-value\"><span class=\"FG-BLACK BG-YELLOW\">Socket not responding &mdash; try restarting.</span></div></div></div>"
+			return
+		fi
+		readarray -t ZETResults < <(find "${ZETSocksDir}" -name "*.ziti" -type f 2>/dev/null)
 
 		# Initial analysis.
 		if [[ ${#ZETResults[*]} -lt 1 ]]; then
-			printf "<span class=\"FG-BLACK BG-YELLOW\">%s</span></span><br>" "The query resulted in no data."
+			printf "<div class=\"summary-row\"><div class=\"stat-card stat-card-error\"><div class=\"stat-label\">ZET Status</div><div class=\"stat-card-value\"><span class=\"FG-BLACK BG-YELLOW\">Query returned no data.</span></div></div></div>"
 			return
+		fi
+
+		# Read kernel tunnel interface byte counters for accurate throughput charting.
+		local ZitiIF ZitiIFTX ZitiIFRX
+		ZitiIF="$(ls /sys/class/net/ 2>/dev/null | grep -m1 '^ziti')"
+		if [[ -n "${ZitiIF}" ]]; then
+			ZitiIFTX="$(cat "/sys/class/net/${ZitiIF}/statistics/tx_bytes" 2>/dev/null)"
+			ZitiIFRX="$(cat "/sys/class/net/${ZitiIF}/statistics/rx_bytes" 2>/dev/null)"
 		fi
 
 		# Begin the analysis and output it.
 		for ((i=0; i<${#ZETResults[*]}; i++)); do
 
-			awk -v ZITICONTEXT_COUNTER="$((i + 1))" -v ZITICONTEXT_COUNTEREND="${#ZETResults[*]}" '
-
-				function PRINTLINE(LBRTYPE, LABELCOLORA, LABELCOLORB, LABEL, SUBLABEL, CONTEXT) {
-					COMMONLINE="GREEN"
-					printf "<span class=\"ZETDETAILLINE FULLWIDTH\">"
-					switch (LBRTYPE) {
-						case "SINGLELBR":
-							printf "<span class=\"FG-"COMMONLINE"\">┃</span>"
-							break
-						case "HEAD":
-							printf "<span class=\"FG-"COMMONLINE"\">┏</span><span class=\"FG-%s BG-%s\"><pre>%s</pre></span>",LABELCOLORA,LABELCOLORB,LABEL
-							break
-						case "TAIL":
-							printf "<span class=\"FG-"COMMONLINE"\">┗</span><span class=\"FG-%s BG-%s\">%s</pre></span>",LABELCOLORA,LABELCOLORB,LABEL
-							break
-						case "INITIAL":
-							printf "<span class=\"FG-"COMMONLINE"\">┣┳</span><span class=\"FG-%s BG-%s\"><pre>%-13.13s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-						case "FINAL":
-							printf "<span class=\"FG-"COMMONLINE"\">┃┗━</span><span class=\"FG-%s BG-%s\"><pre>%-12.12s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-						case "BRANCHNORMAL":
-							printf "<span class=\"FG-"COMMONLINE"\">┃┣━</span><span class=\"FG-%s BG-%s\"><pre>%-12.12s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-						case "BRANCHTOSUB":
-							printf "<span class=\"FG-"COMMONLINE"\">┃┣┳</span><span class=\"FG-%s BG-%s\"><pre>%-12.12s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-						case "SUBBRANCH":
-							printf "<span class=\"FG-"COMMONLINE"\">┃┃┗━</span><span class=\"FG-%s BG-%s\"><pre>%-11.11s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-						case "DOUBLELBR":
-							printf "<span class=\"FG-"COMMONLINE"\">┃┃</span><span class=\"FG-%s BG-%s\"><pre>%-13.13s</pre></span> <span class=\"FG-ITALIC\"><pre>%-12.12s</pre></span><span>%s</span>",LABELCOLORA,LABELCOLORB,LABEL,SUBLABEL,CONTEXT
-							break
-					}
-					printf "</span><br>"
-				}
+			awk -v ZITICONTEXT_COUNTER="$((i + 1))" -v ZITICONTEXT_COUNTEREND="${#ZETResults[*]}" -v HISTFILE="${ZETHistFile}" -v ACTIVEFILE="${ZETActiveFile}" -v KERN_TX="${ZitiIFTX}" -v KERN_RX="${ZitiIFRX}" '
 
 				function JOINARRAY(INPUTARRAY, DELIM, RESULTSCALAR, i, n) {
-					RESULTSCALAR = ""  # Initialize RESULTSCALAR
+					RESULTSCALAR = ""
 					n = length(INPUTARRAY)
 					for (i = 1; i <= n; i++) {
 						if (i == 1) {
@@ -111,10 +97,30 @@ function ZET_Status() {
 					}
 				}
 
+				function FMT_BYTES(n,   v) {
+					v = n+0
+					if (v >= 1073741824) return sprintf("%.1f GB", v/1073741824)
+					if (v >= 1048576)    return sprintf("%.1f MB", v/1048576)
+					if (v >= 1024)       return sprintf("%.1f KB", v/1024)
+					return v " B"
+				}
+
+				function FMT_DURATION(secs,   s, d, h, m) {
+					s = secs+0
+					d = int(s / 86400); s -= d * 86400
+					h = int(s / 3600);  s -= h * 3600
+					m = int(s / 60)
+					if (d > 0) return d "d" h "h"
+					if (h > 0) return h "h" m "m"
+					if (m > 0) return m "m"
+					return s "s"
+				}
+
 				function READYSAVE(SAVE_SWITCHING) {
 					if (SAVE_SWITCHING == "ZITICONTEXT" ) {
 						ZITICONTEXT_REPORT[++ZITICONTEXTS]=ZITI_IDENTITYNAME","ZITI_IDENTITY
 					} else if (SAVE_SWITCHING == "SERVICES" ) {
+						SVC_NAME_BY_ID[SERVICE_IDENTITY] = SERVICE_NAME
 						if (SERVICE_TYPE == "DIALONLY" || SERVICE_TYPE == "DIALBIND") {
 							SERVICE_DIALREPORT[++INCRD]=SERVICE_IDENTITY","SERVICE_TYPE","SERVICE_NAME","SERVICE_CLIENTFULLHOST","SERVICE_SERVERFULLHOST
 						} else if (SERVICE_TYPE == "BINDONLY") {
@@ -123,17 +129,16 @@ function ZET_Status() {
 					} else if (SAVE_SWITCHING == "CONNECTIONS" ) {
 						CONNECTION_REPORT[++CONNECTION_COUNTER]=CONNECTION_NUMBER","CONNECTION_SERVICENAME","CONNECTION_TERMINATORS","toupper(CONNECTION_STATE)","CONNECTION_CHANNELROUTER
 					} else if (SAVE_SWITCHING == "CHILDREN" ) {
-						CHILDREN_REPORT[++CHILD_COUNTER]=CONNECTION_CHILDTOCONNECTIONNUMBER","CONNECTION_CHILDNUMBER","toupper(CONNECTION_CHILDSTATE)","CONNECTION_CHILDCALLERID","CONNECTION_CHILDCHANNELROUTER","CONNECTION_CHILDINFO_A","CONNECTION_CHILDINFO_B
+						CHILDREN_REPORT[++CHILD_COUNTER]=CONNECTION_CHILDTOCONNECTIONNUMBER","CONNECTION_CHILDNUMBER","toupper(CONNECTION_CHILDSTATE)","CONNECTION_CHILDCALLERID","CONNECTION_CHILDCHANNELROUTER","CONNECTION_CHILDINFO_A
 					} else if (SAVE_SWITCHING == "CHANNELS" ) {
-						CHANNEL_REPORT[++CHANNEL_COUNTER]=CHANNEL_NUMBER","CHANNEL_ROUTER","toupper(CHANNEL_STATE)","CHANNEL_LATENCY
-					} else if (SAVE_SWITCHING == "NETSESSIONS" ) {
-						NETSESSION_REPORT[++NETSESSION_COUNTER]=NETSESSION_ID","NETSESSION_SERVICEID
+						CHANNEL_REPORT[++CHANNEL_COUNTER]=CHANNEL_NUMBER","CHANNEL_ROUTER","toupper(CHANNEL_STATE)","CHANNEL_LATENCY","CHANNEL_CONNECTED_TIME
 					}
 				}
 
 				function CONCLUDESECTION(a,b) {
 					if (a == "ZITICONTEXT") {
 						READYSAVE("ZITICONTEXT")
+						IN_CTRL_SECTION=0
 					} else if (a == "SESSION") {
 					} else if (a == "SESSIONINFO") {
 					} else if (a == "SERVICES") {
@@ -171,13 +176,13 @@ function ZET_Status() {
 					# ch[TRIGGER](VALUE1@VALUE2)
 					} else if (PATTERNKEY == "G2") {
 						FINDREGEX="ch\\[" TRIGGER "\\]\\(.*@(.*)\\)"
-					# "TRIGGER":[VALUE]
+					# "TRIGGER": [VALUE]
 					} else if (PATTERNKEY == "H" || PATTERNKEY == "H1") {
-						FINDREGEX="\"" TRIGGER "\":\\[?\\s*(\"?[^]]*\"?)\\s*\\]?"
-					# {high:VALUE,low:VALUE},{high:VALUE,low:VALUE}
+						FINDREGEX="\"" TRIGGER "\":\\s\\[?\\s*(\"?[^]]*\"?)\\s\\]?"
+					# { "high": VALUE, "low": VALUE }, { "high": VALUE, low: VALUE }
 					} else if (PATTERNKEY == "H2") {
 						FRESULT=""
-						while (match(RESULT, /\{high:([0-9]+),low:([0-9]+)\}/, arr)) {
+						while (match(RESULT, /{\s*high:\s*([0-9]+),\s*low:\s*([0-9]+)\s*}/, arr)) {
 							high=arr[1]
 							low=arr[2]
 							if (low == high) {
@@ -188,12 +193,12 @@ function ZET_Status() {
 							RESULT=substr(RESULT, RSTART + RLENGTH)
 						}
 						return FRESULT
-					# "TRIGGER":VALUE
+					# "TRIGGER": VALUE
 					} else if (PATTERNKEY == "I") {
-						FINDREGEX="\"" TRIGGER "\":([^}|^,]+)"
-					# "TRIGGER":"VALUE"
+						FINDREGEX="\"" TRIGGER "\":\\s([^}|^,]+)\\s\\}"
+					# "TRIGGER": "VALUE"
 					} else if (PATTERNKEY == "J") {
-						FINDREGEX="\"" TRIGGER "\":\"([^\"]+)\""
+						FINDREGEX="\"" TRIGGER "\":\\s\"([^\"]+)\","
 					}
 
 					match(CONTEXT, FINDREGEX, STOREARRAY)
@@ -207,14 +212,42 @@ function ZET_Status() {
 					}
 				}
 
+				# ── Completed history file: SERVICE|SENT|RECV ──────────────────────────
+				FILENAME == HISTFILE {
+					if (NF > 0 && $0 != "") {
+						n = split($0, h, "|")
+						if (n >= 3) {
+							hkey = h[1]
+							HIST_SVC[hkey]  = h[1]
+							HIST_SENT[hkey] = h[2]+0
+							HIST_RECV[hkey] = h[3]+0
+						}
+					}
+					next
+				}
+
+				# ── Active snapshot from previous poll: CHILD_ID|SERVICE|SENT|RECV ─────
+				FILENAME == ACTIVEFILE {
+					if (NF > 0 && $0 != "") {
+						n = split($0, h, "|")
+						if (n >= 4) {
+							PREV_SVC[h[1]]  = h[2]
+							PREV_SENT[h[1]] = h[3]+0
+							PREV_RECV[h[1]] = h[4]+0
+						}
+					}
+					next
+				}
+
 				BEGIN {
 					CURRENTSECTION="INIT"
 					ARRAY_GLOBALCOUNTER=0
 					CONNECTION_COUNTER=0
 					CHILD_COUNTER=0
 					CHANNEL_COUNTER=0
-					NETSESSION_COUNTER=0
-					CHANNEL_ORPHANCOUNTER=0
+					SESSION_COUNTER=0
+					CTRL_COUNT=0
+					IN_CTRL_SECTION=0
 				}
 
 				{
@@ -241,6 +274,32 @@ function ZET_Status() {
 						ZITI_IDENTITYNAME=FINDVALUE($0, "C", "Identity")
 						ZITI_IDENTITY=FINDVALUE($0, "A", FINDVALUE($0, "C", "Identity"))
 
+					# Controller connections.
+					# Old format (pre-1.15): Controller[name]: [version] url online[Y/N] — all on one line.
+					# New format (1.15+): Controller[name]: [version] primary_url — header only,
+					#   followed by indented sub-lines: "  UUID: online[Y] https://URL"
+					} else if (/^Controller\[/) {
+						if (/online\[/) {
+							# Old single-line format
+							CTRL_ONLINE=FINDVALUE($0, "A", "online")
+							CTRL_URL=gensub(/^Controller\[[^\]]+\]:[[:space:]]+\[[^\]]+\][[:space:]]+(https?:\/\/[^[:space:]]+).*/, "\\1", "1")
+							CTRL_HOST=gensub(/https?:\/\/([^\/]+).*/, "\\1", "1", CTRL_URL)
+							CTRL_REPORT[++CTRL_COUNT]=CTRL_HOST","(CTRL_ONLINE=="Y" ? "ONLINE" : "OFFLINE")
+							CTRL_PRIMARY_HOST=CTRL_HOST
+							IN_CTRL_SECTION=0
+						} else {
+							# New 1.15+ multi-line format: header URL is the currently-active controller
+							CTRL_PRIMARY_URL=gensub(/^Controller\[[^\]]+\]:[[:space:]]+\[[^\]]+\][[:space:]]+(https?:\/\/[^[:space:]]*).*/, "\\1", "1")
+							CTRL_PRIMARY_HOST=gensub(/https?:\/\/([^\/]+).*/, "\\1", "1", CTRL_PRIMARY_URL)
+							IN_CTRL_SECTION=1
+						}
+					} else if (IN_CTRL_SECTION && /^\s+[0-9a-f][0-9a-f-]*:.*online\[/) {
+						# Indented controller endpoint sub-line: "  UUID: online[Y] https://URL"
+						CTRL_ONLINE=FINDVALUE($0, "A", "online")
+						CTRL_URL=gensub(/^\s+[^:]+:[[:space:]]+[^[:space:]]+[[:space:]]+(https?:\/\/[^[:space:]]*).*/, "\\1", "1")
+						CTRL_HOST=gensub(/https?:\/\/([^\/]+).*/, "\\1", "1", CTRL_URL)
+						CTRL_REPORT[++CTRL_COUNT]=CTRL_HOST","(CTRL_ONLINE=="Y" ? "ONLINE" : "OFFLINE")
+
 					# SERVICES SECTION #
 					} else if (/dial=.*,bind=.*/) {
 
@@ -254,7 +313,12 @@ function ZET_Status() {
 							SERVICE_TYPE="DIALBIND"
 						}
 
-						SERVICE_NAME=FINDVALUE($0, "E", "perm")
+						# New format: "ServiceName {id:HEX} perm:(...)" – strip everything from first {/[ onward.
+						# Old format fallback: use pattern E.
+						if (match($0, /^(.*)\s+[{\[]/, svcm))
+							SERVICE_NAME=svcm[1]
+						else
+							SERVICE_NAME=FINDVALUE($0, "E", "perm")
 						SERVICE_IDENTITY=FINDVALUE($0, "A", "id")
 
 					} else if (/^\s+config\[host.v1\]/) {
@@ -264,32 +328,41 @@ function ZET_Status() {
 						} else {
 							SERVICE_SERVERHOST=FINDVALUE($0, "J", "address")
 						}
-						gsub(/,/,"|",SERVICE_SERVERHOST) # Change comma to BAR/OR.
+						gsub(/,/,"|",SERVICE_SERVERHOST)
 
 						if (/\"allowedPortRanges\"/) {
 							SERVICE_SERVERPORT=FINDVALUE($0, "H1", "allowedPortRanges")
+						} else if (match($0, /"port":[[:space:]]*([0-9]+)/, pm)) {
+							# Old-style flat "port": N — pattern I fails when port is not last
+							# before }, so use a direct numeric match instead.
+							SERVICE_SERVERPORT=pm[1]
 						} else {
-							SERVICE_SERVERPORT=FINDVALUE($0, "I", "port")
+							SERVICE_SERVERPORT=""
 						}
-						gsub(/,/,"|",SERVICE_SERVERPORT) # Change comma to BAR/OR.
+						gsub(/,/,"|",SERVICE_SERVERPORT)
 
 						if (/\"allowedProtocols\"/) {
 							SERVICE_SERVERPROTOCOL=FINDVALUE($0, "H", "allowedProtocols")
 						} else {
-							SERVICE_SERVERPROTOCOL=SERVICE_SERVERHOST=FINDVALUE($0, "H", "address")
+							# Old-style flat "protocol": "tcp" — use pattern J (exact quoted match).
+							# The previous double-assignment bug overwrote SERVICE_SERVERHOST via
+							# pattern H, which greedily captured the entire rest of the line.
+							SERVICE_SERVERPROTOCOL=FINDVALUE($0, "J", "protocol")
 						}
-						gsub(/,/,"|",SERVICE_SERVERPROTOCOL) # Change comma to BAR/OR.
+						gsub(/,/,"|",SERVICE_SERVERPROTOCOL)
 
 						SERVICE_SERVERFULLHOST="["SERVICE_SERVERHOST"]:["SERVICE_SERVERPORT"]/["SERVICE_SERVERPROTOCOL"]"
 						gsub(/,/," ",SERVICE_SERVERFULLHOST)
 
-						if (/\"forwardPort\":true/) {
+						# ZET 1.15+ emits "forwardAddress": true (space after colon);
+						# older used "forwardPort":true (no space). Handle both.
+						if (/\"forwardPort\":[ ]*true/ || /\"forwardAddress\":[ ]*true/) {
 							SERVICE_SERVERFORWARDPORT="<span class=\"FG-GREEN\">YES</span>"
 						} else {
 							SERVICE_SERVERFORWARDPORT="<span class=\"FG-GREY\">NO</span>"
 						}
 
-						if (/\"forwardProtocol\":true/) {
+						if (/\"forwardProtocol\":[ ]*true/) {
 							SERVICE_SERVERFORWARDPROTOCOL="<span class=\"FG-GREEN\">YES</span>"
 						} else {
 							SERVICE_SERVERFORWARDPROTOCOL="<span class=\"FG-GREY\">NO</span>"
@@ -303,7 +376,7 @@ function ZET_Status() {
 						split(SERVICE_CLIENTHOST,ARRAY_CLIENTHOSTS,",")
 						for (EACH_CLIENTHOST in ARRAY_CLIENTHOSTS) {
 							FINALRESOLVE=ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]
-							gsub(/\*\.?/,"",FINALRESOLVE) # Remove star domains.
+							gsub(/\*\.?/,"",FINALRESOLVE)
 							if (SERVICE_TYPE == "DIALONLY" || SERVICE_TYPE == "DIALBIND") {
 								if (match(ARRAY_CLIENTHOSTS[EACH_CLIENTHOST],/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) {
 									ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]=ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]"@IPONLY:"ARRAY_CLIENTHOSTS[EACH_CLIENTHOST]
@@ -319,10 +392,10 @@ function ZET_Status() {
 
 						SERVICE_CLIENTHOST="["JOINARRAY(ARRAY_CLIENTHOSTS,"|")"]"
 						SERVICE_CLIENTPORT=FINDVALUE($0, "H1", "portRanges")
-						gsub(/,/,"|",SERVICE_CLIENTPORT) # Change comma to plus.
+						gsub(/,/,"|",SERVICE_CLIENTPORT)
 						SERVICE_CLIENTPROTOCOL=FINDVALUE($0, "H", "protocols")
-						gsub(/,/,"|",SERVICE_CLIENTPROTOCOL) # Change comma to plus.
-						SERVICE_CLIENTFULLHOST=SERVICE_CLIENTHOST"=["SERVICE_CLIENTPORT"]/["SERVICE_CLIENTPROTOCOL"]"
+						gsub(/,/,"|",SERVICE_CLIENTPROTOCOL)
+						SERVICE_CLIENTFULLHOST=SERVICE_CLIENTHOST":["SERVICE_CLIENTPORT"]/["SERVICE_CLIENTPROTOCOL"]"
 
 					} else if (/^\s+config\[ziti-tunneler-server.v1\]/) {
 
@@ -346,33 +419,61 @@ function ZET_Status() {
 								SERVICE_CLIENTHOST=SERVICE_CLIENTHOST"@IPONLY:"CLIENTHOSTRESOLVED
 							}
 						}
-						SERVICE_CLIENTFULLHOST="["SERVICE_CLIENTHOST"=["SERVICE_CLIENTPORT"]"
+						SERVICE_CLIENTFULLHOST="["SERVICE_CLIENTHOST":["SERVICE_CLIENTPORT"]/[tcp]"
 
 					# POSTURE QUERIES SECTION #
 					} else if (/^\s+posture/) {
 
 						# NEEDS WORK.
-						#READYSAVE("POSTURECHECKS")
 
 					# NETSESSIONS SECTION #
-					} else if (/.*: service_id/) {
+					} else if (/.*: service_id\[/) {
 
-						NETSESSION_ID=FINDVALUE($0, "E", "service_id")
-						NETSESSION_SERVICEID=FINDVALUE($0, "A", "service_id")
-						READYSAVE("NETSESSIONS")
+						SESS_SVC_ID = FINDVALUE($0, "A", "service_id")
+						getline SESS_LINE
+						SESS_ISS = ""; SESS_EXP = 0; SESS_TYPE = ""
+						if (match(SESS_LINE, /"iss":"([^"]+)"/, SMAT)) SESS_ISS = SMAT[1]
+						if (match(SESS_LINE, /"exp":([0-9]+)/, SMAT))  SESS_EXP = SMAT[1]+0
+						if (match(SESS_LINE, /"z_st":"([^"]+)"/, SMAT)) SESS_TYPE = SMAT[1]
+						SESS_ISS_HOST = gensub(/https?:\/\/([^\/]+).*/, "\\1", "1", SESS_ISS)
+						SESSION_REPORT[++SESSION_COUNTER] = SESS_SVC_ID","SESS_TYPE","SESS_ISS_HOST","SESS_EXP
 
 					# CHANNELS SECTION #
 					} else if (/^ch\[.*\]/) {
 
 						CHANNEL_NUMBER=FINDVALUE($0, "A", "ch")
-						CHANNEL_ROUTER=FINDVALUE($0, "D", "ch\\[.*\\]")
-						# NEEDS WORK
-						if (match($0,"latency")) {
-							CHANNEL_STATE=gensub(/.*\) (.*) \[.*/,"\\1","1")
-							CHANNEL_LATENCY=gensub(/.*\[latency=(.*)\].*/,"\\1","1")
+
+						# ZET 1.15+: two-line format
+						#   ch[N] ROUTER NAME WITH SPACES
+						#       connected[Y] version[...] address[...] latency[N] connected[Xs]
+						# ZET <1.15: single-line
+						#   ch[N](ROUTER@IP) STATE [latency=Xms]
+						if (/^ch\[[^\]]+\]\(/) {
+							# Old single-line parenthesised format
+							CHANNEL_ROUTER=FINDVALUE($0, "D", "ch\\[.*\\]")
+							if (match($0,"latency")) {
+								CHANNEL_STATE=gensub(/.*\) (.*) \[.*/,"\\1","1")
+								CHANNEL_LATENCY=gensub(/.*\[latency=(.*)\].*/,"\\1","1")
+							} else {
+								CHANNEL_STATE=gensub(/.*\) (.*)/,"\\1","1")
+								CHANNEL_LATENCY="NA"
+							}
+							CHANNEL_CONNECTED_TIME=""
 						} else {
-							CHANNEL_STATE=gensub(/.*\) (.*).*/,"\\1","1")
-							CHANNEL_LATENCY="NA"
+							# New two-line format: router name is everything after ch[N]
+							CHANNEL_ROUTER=gensub(/^ch\[[^\]]+\]\s*/,"","1")
+							# Read the indented detail line
+							getline CHAN_DETAIL_LINE
+							# connected[Y] = state; latency[N] = ms; connected[NNNs] = uptime
+							CHAN_CONN=FINDVALUE(CHAN_DETAIL_LINE, "A", "connected")
+							CHANNEL_STATE = (CHAN_CONN == "Y") ? "CONNECTED" : "CONNECTING"
+							CHANNEL_LATENCY=FINDVALUE(CHAN_DETAIL_LINE, "A", "latency")
+							if (CHANNEL_LATENCY == "") CHANNEL_LATENCY="NA"
+							# Extract uptime: the second connected[...] field has a numeric+s value
+							if (match(CHAN_DETAIL_LINE, /connected\[([0-9]+)s\]/, cm))
+								CHANNEL_CONNECTED_TIME = cm[1]
+							else
+								CHANNEL_CONNECTED_TIME = ""
 						}
 						READYSAVE("CHANNELS")
 
@@ -384,8 +485,17 @@ function ZET_Status() {
 						CONNECTION_TERMINATORS=FINDVALUE($0, "A", "terminators")
 						CONNECTION_STATE=FINDVALUE($0, "A", "state")
 						CONNECTION_CHANNELROUTER=FINDVALUE($0, "A", "ch")
-						CONNECTION_CHANNELROUTER=gsub(".*/","",CONNECTION_CHANNELROUTER)
+						gsub(".*/","",CONNECTION_CHANNELROUTER)
 						READYSAVE("CONNECTIONS")
+						# DIAL connections (client-side): "conn[N/ID]: state[...] service[...] using ch[...]"
+						# Stats are on the next line; there are no child entries — synthesise one.
+						if (/using ch\[/) {
+							getline DIAL_STATS
+							d_sb = 0; d_rb = 0
+							if (match(DIAL_STATS, /sent\[([0-9]+)\]/, dm)) d_sb = dm[1]+0
+							if (match(DIAL_STATS, /recv\[([0-9]+)\]/, dm)) d_rb = dm[1]+0
+							CHILDREN_REPORT[++CHILD_COUNTER] = CONNECTION_NUMBER","CONNECTION_NUMBER","toupper(CONNECTION_STATE)","","CONNECTION_CHANNELROUTER","("sent[" d_sb "] recv[" d_rb "]")
+						}
 
 					# CONNECTIONS/CHILDREN SUBSECTION #
 					} else if (/^\s+child\[.*\]/) {
@@ -393,13 +503,15 @@ function ZET_Status() {
 						CONNECTION_CHILDTOCONNECTIONNUMBER=CONNECTION_NUMBER
 						CONNECTION_CHILDNUMBER=FINDVALUE($0, "A", "child")
 						CONNECTION_CHILDSTATE=FINDVALUE($0, "A", "state")
-						CONNECTION_CHILDCALLERID=FINDVALUE($0, "A", "caller_id")
+						# New format: caller[NAME]; old format: caller_id[NAME] or caller_id=NAME
+						CONNECTION_CHILDCALLERID=FINDVALUE($0, "A", "caller")
+						if (CONNECTION_CHILDCALLERID == "")
+							CONNECTION_CHILDCALLERID=FINDVALUE($0, "A", "caller_id")
+						# New format: ch[FULL_ROUTER_NAME]; old format: ch=ch[N](...)
 						CONNECTION_CHILDCHANNELROUTER=FINDVALUE($0, "A", "ch")
-						CONNECTION_CHILDCHANNELROUTER=gsub(".*/","",CONNECTION_CHILDCHANNELROUTER)
+						gsub(".*/","",CONNECTION_CHILDCHANNELROUTER)
 						getline
 						CONNECTION_CHILDINFO_A=gensub(/^[[:blank:]]+(.*)/,"\\1","1")
-						getline
-						CONNECTION_CHILDINFO_B=gensub(/^[[:blank:]]+bridge: (.*)/,"\\1","1")
 						READYSAVE("CHILDREN")
 
 					}
@@ -409,244 +521,235 @@ function ZET_Status() {
 				END {
 					CURRENTSECTION=CONCLUDESECTION(CURRENTSECTION,"END")
 
-					# Print ZITICONTEXT first.
-					# For every ZITICONTEXT.
-					for (EACH_ZITICONTEXT in ZITICONTEXT_REPORT) {
-						# ZITICONTEXTS # [1]=IDNAME,[2]=ID
-						split(ZITICONTEXT_REPORT[EACH_ZITICONTEXT],PRINT_ZITICONTEXT,",")
-						PRINTLINE("HEAD","GREEN","NONE",sprintf("%02d/%s/%s",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]))
-						PRINTLINE("SINGLELBR")
+					SUM_ACTIVE_CONNS=0
+					for (c in CHILDREN_REPORT) {
+						split(CHILDREN_REPORT[c],PC,",")
+						if (PC[3] != "" && PC[3] != "CLOSED" && PC[3] != "TERMINATED") SUM_ACTIVE_CONNS++
 					}
 
-					# Combine the SERVICE arrays in proper order and sorting.
+					# ── Throughput data for JS chart ─────────────────────────────────────
+					# Prefer kernel interface counters (complete, monotonic); fall back to
+					# summed connection bytes if the ziti interface was not found.
+					if (KERN_TX != "" || KERN_RX != "") {
+						chart_tx = KERN_TX+0
+						chart_rx = KERN_RX+0
+					} else {
+						chart_tx = 0; chart_rx = 0
+						for (ci in CHILDREN_REPORT) {
+							split(CHILDREN_REPORT[ci],PCH,",")
+							if (match(PCH[6], /sent\[([0-9]+)\]/, mck)) chart_tx += mck[1]+0
+							if (match(PCH[6], /recv\[([0-9]+)\]/, mck)) chart_rx += mck[1]+0
+						}
+					}
+					printf "<div id=\"ZET-THROUGHPUT\" style=\"display:none\" data-sent=\"%d\" data-recv=\"%d\"></div>", chart_tx, chart_rx
+
+					# ── Table-based detail view (replaces tree) ──────────────────────────────
+					# Merge DIAL and BIND service arrays for the services table
 					CONCATARRAY(SERVICE_DIALREPORT,SERVICE_BINDREPORT,SERVICE_REPORT)
-					# Loop all SERVICES.
-					for (EACH_SERVICE=1; EACH_SERVICE<=ARRAY_GLOBALCOUNTER; EACH_SERVICE++) {
 
-						# SERVICES # [1]=ID,[2]=TYPE,[3]=NAME,[4]=INADDR@RESOLVED,[5]=OUTADDR
-						split(SERVICE_REPORT[EACH_SERVICE],PRINT_SERVICE,",")
+					# Identity block
+					for (EACH_ZC in ZITICONTEXT_REPORT) {
+						split(ZITICONTEXT_REPORT[EACH_ZC],PZC,",")
+						printf "<div class=\"zt-identity-block\">"
+						printf "<div class=\"zt-identity-header\">&#x25CF;&nbsp;%s</div>", PZC[1]
+					}
 
-						# If the user passed in a filter, and that filter is not matched here, continue past this service.
-						if (FILTER) {
-							SERVICELINE=EACH_SERVICE"/"PRINT_SERVICE[2]"/"PRINT_SERVICE[1]"/"PRINT_SERVICE[3]
-							if (SERVICELINE !~ FILTER) continue
+					# ── Controllers ──────────────────────────────────────────────────────────
+					if (CTRL_COUNT > 0) {
+						printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Controllers</div>"
+						printf "<table class=\"zt-table\"><thead><tr><th>Controller</th><th class=\"zt-th-sm\">Status</th></tr></thead><tbody>"
+						for (ci=1; ci<=CTRL_COUNT; ci++) {
+							split(CTRL_REPORT[ci],CPR,",")
+							bcls = (CPR[2]=="ONLINE") ? "badge-online" : "badge-offline"
+							if (CTRL_PRIMARY_HOST != "" && CPR[1] == CTRL_PRIMARY_HOST)
+								printf "<tr><td class=\"zt-mono\">&#x25CF;&nbsp;%s</td><td><span class=\"badge %s\">%s</span></td></tr>", CPR[1], bcls, CPR[2]
+							else
+								printf "<tr><td class=\"zt-mono\"><span class=\"zt-muted\">&#x25CB;</span>&nbsp;%s</td><td><span class=\"badge %s\">%s</span></td></tr>", CPR[1], bcls, CPR[2]
 						}
+						printf "</tbody></table></div>"
+					}
 
-						# First output line with service information.
-						PRINTLINE("INITIAL","GREEN","NONE",sprintf("%04d",EACH_SERVICE),"SERVICE",PRINT_SERVICE[3]" ("PRINT_SERVICE[2]")")
-
-						# Net Sessions, Service Authorization token assessment.
-						NETSESSION_FOUNDSEMAPHORE="FALSE"
-						# For every SERVICE, loop all NETSESSIONS.
-						for (EACH_NETSESSIONSERVICE in NETSESSION_REPORT) {
-
-							# NETSESSIONS # [1]=ID,[2]=SERVICEID
-							split(NETSESSION_REPORT[EACH_NETSESSIONSERVICE],PRINT_NETSESSION,",")
-							if (PRINT_NETSESSION[2] == PRINT_SERVICE[1]) {
-								NETSESSION_FOUNDSEMAPHORE="TRUE"
-								break
-							}
-
-						}
-
-						# Service type output with color indicator for local applicability.
-						if (PRINT_SERVICE[2] == "DIALONLY") {
-							SERVICE_INGRESSTYPE="●INGRESS"
-							SERVICE_EGRESSTYPE="▷EGRESS"
-							SERVICE_INGRESSTYPE_COLORFG="GREEN"
-							SERVICE_INGRESSTYPE_COLORBG="NONE"
-							SERVICE_EGRESSTYPE_COLORFG="GREY"
-							SERVICE_EGRESSTYPE_COLORBG="NONE"
-						} else if (PRINT_SERVICE[2] == "DIALBIND") {
-							SERVICE_INGRESSTYPE="●INGRESS"
-							SERVICE_EGRESSTYPE="▶EGRESS"
-							SERVICE_INGRESSTYPE_COLORFG="GREEN"
-							SERVICE_INGRESSTYPE_COLORBG="NONE"
-							SERVICE_EGRESSTYPE_COLORFG="GREEN"
-							SERVICE_EGRESSTYPE_COLORBG="NONE"
-						} else if (PRINT_SERVICE[2] == "BINDONLY") {
-							SERVICE_INGRESSTYPE="○INGRESS"
-							SERVICE_EGRESSTYPE="▶EGRESS"
-							SERVICE_INGRESSTYPE_COLORFG="GREY"
-							SERVICE_INGRESSTYPE_COLORBG="NONE"
-							SERVICE_EGRESSTYPE_COLORFG="GREEN"
-							SERVICE_EGRESSTYPE_COLORBG="NONE"
-						}
-
-						# Match the SERVICE_TYPE.
-						if (PRINT_SERVICE[2] == "DIALONLY" || PRINT_SERVICE[2] == "DIALBIND") {
-
-							if (NETSESSION_FOUNDSEMAPHORE == "TRUE") {
-								PRINTLINE("BRANCHNORMAL","GREEN","NONE","SESSAUTH","TOKEN",PRINT_NETSESSION[1])
-							} else {
-								PRINTLINE("BRANCHNORMAL","RED","NONE","SESSAUTH","TOKEN","NOT PRESENT")
-							}
-
-							# Match the SERVICE_INADDR@RESOLVED.
-							split(PRINT_SERVICE[4],ARRAY_CLIENTHOSTS,"=")
-							split(ARRAY_CLIENTHOSTS[1],ARRAY_CLIENTHOSTRESOLUTIONS,"|")
-							for (EACH_CLIENTHOSTRESOLUTION in ARRAY_CLIENTHOSTRESOLUTIONS) {
-								gsub(/\[|\]/, "", ARRAY_CLIENTHOSTRESOLUTIONS[EACH_CLIENTHOSTRESOLUTION])
-								split(ARRAY_CLIENTHOSTRESOLUTIONS[EACH_CLIENTHOSTRESOLUTION],NAMEANDRESOLUTION,"@")
-								if (NAMEANDRESOLUTION[2] == "TRYDNS:") {
-									PRINTLINE("BRANCHTOSUB",SERVICE_INGRESSTYPE_COLORFG,SERVICE_INGRESSTYPE_COLORBG,SERVICE_INGRESSTYPE,"INTERCEPTS","["NAMEANDRESOLUTION[1]"]:"ARRAY_CLIENTHOSTS[2])
-									PRINTLINE("SUBBRANCH","RED","NONE","NORESOLVE")
-								} else if (NAMEANDRESOLUTION[2] ~ "IPONLY") {
-									gsub(/IPONLY:/,"",NAMEANDRESOLUTION[2])
-									PRINTLINE("BRANCHNORMAL",SERVICE_INGRESSTYPE_COLORFG,SERVICE_INGRESSTYPE_COLORBG,SERVICE_INGRESSTYPE,"INTERCEPTS","["NAMEANDRESOLUTION[1]"]:"ARRAY_CLIENTHOSTS[2])
-								} else {
-									gsub(/TRYDNS:/,"",NAMEANDRESOLUTION[2])
-									PRINTLINE("BRANCHTOSUB",SERVICE_INGRESSTYPE_COLORFG,SERVICE_INGRESSTYPE_COLORBG,SERVICE_INGRESSTYPE,"INTERCEPTS","["NAMEANDRESOLUTION[1]"]:"ARRAY_CLIENTHOSTS[2])
-									PRINTLINE("SUBBRANCH","GREEN","NONE","RESOLVED","ZITI_IP","["NAMEANDRESOLUTION[2]"]")
-								}
-							}
-
+					# ── Edge Routers ─────────────────────────────────────────────────────────
+					printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Edge Routers</div>"
+					printf "<table class=\"zt-table\"><thead><tr><th>Router</th><th class=\"zt-th-sm\">Connected</th><th class=\"zt-th-sm\">Latency</th><th class=\"zt-th-sm\">Status</th></tr></thead><tbody>"
+					for (ci=1; ci<=CHANNEL_COUNTER; ci++) {
+						split(CHANNEL_REPORT[ci],PC,",")
+						is_conn = (PC[3] ~ /(^| )CONNECTED$/)
+						lat = PC[4]+0
+						uptime = PC[5]+0
+						if (is_conn) {
+							if (lat < 50) lc="lat-good"; else if (lat < 100) lc="lat-warn"; else lc="lat-bad"
+							lt = lat "ms"
+							bc = "badge-up"; bt = "UP"
+							ut = (uptime > 0) ? FMT_DURATION(uptime) : "&mdash;"
 						} else {
-
-							# Match the SERVICE_INADDR.
-							split(PRINT_SERVICE[4],ARRAY_CLIENTHOSTS,"=")
-							split(ARRAY_CLIENTHOSTS[1],ARRAY_CLIENTHOST," ")
-							for (EACH_CLIENTHOST in ARRAY_CLIENTHOST)
-								PRINTLINE("BRANCHNORMAL",SERVICE_INGRESSTYPE_COLORFG,SERVICE_INGRESSTYPE_COLORBG,SERVICE_INGRESSTYPE,"INTERCEPTS",ARRAY_CLIENTHOST[EACH_CLIENTHOST]":"ARRAY_CLIENTHOSTS[2])
-
+							lc = "zt-muted"; lt = "&mdash;"
+							bc = "badge-connecting"; bt = "CONN"
+							ut = "&mdash;"
 						}
+						printf "<tr><td class=\"zt-mono\">%s</td><td class=\"zt-muted\">%s</td><td class=\"%s\">%s</td><td><span class=\"badge %s\">%s</span></td></tr>", PC[2], ut, lc, lt, bc, bt
+					}
+					printf "</tbody></table></div>"
 
-						# For every SERVICE, loop all CONNECTIONS.
-						for (EACH_CONNECTION in CONNECTION_REPORT) {
+					# ── Authorized Services ───────────────────────────────────────────────────
+					if (ARRAY_GLOBALCOUNTER > 0) {
+						printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Authorized Services</div>"
+						printf "<table class=\"zt-table\"><thead><tr><th>Service</th><th class=\"zt-th-sm\">Type</th><th>Address</th></tr></thead><tbody>"
+						for (si=1; si<=ARRAY_GLOBALCOUNTER; si++) {
+							split(SERVICE_REPORT[si],PS,",")
+							if (PS[2]=="DIALONLY")  { bc="badge-dial";  bt="DIAL"; addr=PS[4] }
+							else if (PS[2]=="BINDONLY") { bc="badge-bind"; bt="BIND"; addr=PS[5] }
+							else { bc="badge-dialbind"; bt="BOTH"; addr=PS[4] }
+							# Strip internal annotations, brackets, and normalize to host:port/proto
+							addr = gensub(/ \(FWD PORT=.*\)/, "", "1", addr)
+							addr = gensub(/@(TRYDNS|IPONLY):[^\]]*/, "", "g", addr)
+							addr = gensub(/\[([^\]]*)\]:\[([^\]]*)\]\/\[([^\]]*)\]/, "\\1:\\2/\\3", "g", addr)
+							gsub(/\|/, ",", addr)
+							printf "<tr><td class=\"zt-mono\">%s</td><td><span class=\"badge %s\">%s</span></td><td class=\"zt-mono\">%s</td></tr>", PS[3], bc, bt, addr
+						}
+						printf "</tbody></table></div>"
+					}
 
-							# CONNECTIONS # [1]=NUMBER,[2]=SERVICENAME,[3]=CHANNELTERMINATORS,[4]STATE,[5]CHANNELROUTER
-							split(CONNECTION_REPORT[EACH_CONNECTION],PRINT_CONNECTION,",")
+					# ── Active Sessions ──────────────────────────────────────────────────────
+					if (SESSION_COUNTER > 0) {
+						printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Active Sessions</div>"
+						printf "<table class=\"zt-table\"><thead><tr><th>Service</th><th class=\"zt-th-sm\">Type</th><th>Issuer</th><th class=\"zt-th-sm\">Expires</th></tr></thead><tbody>"
+						for (ci=1; ci<=SESSION_COUNTER; ci++) {
+							split(SESSION_REPORT[ci],SESS,",")
+							svc_n = (SESS[1] in SVC_NAME_BY_ID) ? SVC_NAME_BY_ID[SESS[1]] : SESS[1]
+							if (SESS[2] == "Dial")      { sbc="badge-dial"; sbt="DIAL" }
+							else if (SESS[2] == "Bind") { sbc="badge-bind"; sbt="BIND" }
+							else                        { sbc="badge-dialbind"; sbt=SESS[2] }
+							exp_secs = SESS[4]+0 - systime()
+							if (exp_secs > 86400*2)
+								exp_str = FMT_DURATION(exp_secs)
+							else if (exp_secs > 0)
+								exp_str = "<span class=\"lat-warn\">" FMT_DURATION(exp_secs) "</span>"
+							else
+								exp_str = "<span class=\"lat-bad\">EXPIRED</span>"
+							printf "<tr><td class=\"zt-mono\">%s</td><td><span class=\"badge %s\">%s</span></td><td class=\"zt-mono zt-muted\">%s</td><td class=\"zt-num\">%s</td></tr>",
+								svc_n, sbc, sbt, SESS[3], exp_str
+						}
+						printf "</tbody></table></div>"
+					}
 
-							# Match CONNECTION_SERVICENAME to current SERVICE_NAME.
-							if (PRINT_SERVICE[3] == PRINT_CONNECTION[2]) {
-
-								# For every CONNECTION, loop all CHILDREN.
-								for (EACH_CHILD in CHILDREN_REPORT) {
-
-									# CHILDREN # [1]=CHILDCONNECTIONNUMBER,[2]=CHILDNUMBER,[3]=CHILDSTATE,[4]=CHILDCALLERID,[5]=CHILDCHANNELROUTER,[6]=CHILDINFOA,[7]CHILDINFOB
-									split(CHILDREN_REPORT[EACH_CHILD],PRINT_CHILD,",")
-
-									# Match CHILD_CONNECTIONNUMBER to current CONNECTION_NUMBER.
-									if (PRINT_CHILD[1] == PRINT_CONNECTION[1]) {
-
-										# For every matched CHILD, loop all CHANNELS.
-										for (EACH_CHANNEL in CHANNEL_REPORT) {
-
-											# CHANNELS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-											split(CHANNEL_REPORT[EACH_CHANNEL],PRINT_CHANNEL,",")
-
-											# Add the CHANNEL to the orphan list if its not connected.
-											if (PRINT_CHANNEL[3] != "CONNECTED") {
-												CHANNEL_ORPHANSEMAPHORE="FALSE"
-												for (EACH_ORPHAN in CHANNEL_ORPHANS) {
-													# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-													split(CHANNEL_ORPHANS[EACH_ORPHAN],CHECK_CHANNELORPHAN,",")
-													# Match the CHANNELORPHAN_NUMBER to the current CHANNEL_NUMBER.
-													if (CHECK_CHANNELORPHAN[1] == PRINT_CHANNEL[1]) {
-														CHANNEL_ORPHANSEMAPHORE="TRUE"
-														CHANNEL_ORPHANS_PRESENT="1"
-														break
-													}
-												}
-												if (CHANNEL_ORPHANSEMAPHORE == "FALSE")
-													CHANNEL_ORPHANS[++CHANNEL_ORPHANCOUNTER]=PRINT_CHANNEL[1]","PRINT_CHANNEL[2]","PRINT_CHANNEL[3]","PRINT_CHANNEL[4]
-											}
-
-											# Match the CHANNEL_ROUTER to the current CHILD_CHANNELROUTER or if not assigned.
-											if (PRINT_CHILD[5] == PRINT_CHANNEL[1] || PRINT_CHILD[5] == "(none)" ) {
-												# Emphasize latency if above threshold.
-												if (PRINT_CHANNEL[4] < 50) {
-													PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"ms</span>"
-												} else if (PRINT_CHANNEL[4] < 100) {
-													PRINT_CHANNEL[4]="<span class=\"FG-BLACK BG-YELLOW\">"PRINT_CHANNEL[4]"ms</span>"
-												} else {
-													PRINT_CHANNEL[4]="<span class=\"FG-WHITE BG-RED\">"PRINT_CHANNEL[4]"ms</span>"
-												}
-
-												# Match the CONNECTION_STATE, and print the information.
-												split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
-												if (PRINT_CHILD[3] == "CONNECTED" || PRINT_CHILD[3] == "ACCEPTING") {
-													PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CHILD[3],"CONNECTION","#"PRINT_CONNECTION[1]" (CHILD #"PRINT_CHILD[2]") (TERMINATORS="PRINT_CONNECTION[3]")")
-												} else if (PRINT_CHILD[3] == "DISCONNECTED" || PRINT_CHILD[3] == "TIMEDOUT") {
-													PRINTLINE("BRANCHNORMAL","WHITE","RED",PRINT_CHILD[3],"CHILD","#"PRINT_CHILD[2])
-												} else {
-													PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CHILD[3],"CHILD","#"PRINT_CHILD[2])
-												}
-												PRINTLINE("DOUBLELBR","NONE","NONE"," ","CALLER",PRINT_CHILD[4])
-												PRINTLINE("DOUBLELBR","NONE","NONE"," ","CHANNEL",PRINT_CHANNEL[4]" ⇄ "PRINT_CHANNELPARTS[1])
-												PRINTLINE("DOUBLELBR","NONE","NONE"," ","BRIDGE_INFO",PRINT_CHILD[7])
-												PRINTLINE("DOUBLELBR","NONE","NONE"," ","DATA_INFO",PRINT_CHILD[6])
-												break
-
-											}
-
-										}
-
-									}
-
-								}
-
-								# Fall through if there is a connection without children.
-								if (PRINT_CONNECTION[4]) {
-
-									if (PRINT_CONNECTION[4] == "CONNECTED") {
-										PRINTLINE("BRANCHNORMAL","WHITE","GREEN",PRINT_CONNECTION[4],"CONNECTION","#"PRINT_CONNECTION[1])
-									} else {
-										PRINTLINE("BRANCHNORMAL","BLACK","YELLOW",PRINT_CONNECTION[4],"CONNECTION","#"PRINT_CONNECTION[1])
-									}
-
-									# For every matched CHILD, loop all CHANNELS.
-									for (EACH_CHANNEL in CHANNEL_REPORT) {
-
-										# CHANNELS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-										split(CHANNEL_REPORT[EACH_CHANNEL],PRINT_CHANNEL,",")
-
-										# Match the CHANNEL_ROUTER to the current CONNECTION_CHANNELROUTER or if not assigned.
-										if (PRINT_CONNECTION[5] == PRINT_CHANNEL[1] || PRINT_CONNECTION[5] == "(none)" ) {
-											# Emphasize latency if above threshold.
-											if (PRINT_CHANNEL[4] < 50) {
-												PRINT_CHANNEL[4]="<span class=\"FG-GREEN\">"PRINT_CHANNEL[4]"ms</span>"
-											} else if (PRINT_CHANNEL[4] < 100) {
-												PRINT_CHANNEL[4]="<span class=\"FG-BLACK BG-YELLOW\">"PRINT_CHANNEL[4]"ms</span>"
-											} else {
-												PRINT_CHANNEL[4]="<span class=\"FG-WHITE BG-RED\">"PRINT_CHANNEL[4]"ms</span>"
-											}
-											split(PRINT_CHANNEL[2],PRINT_CHANNELPARTS,"@")
-											PRINTLINE("DOUBLELBR","NONE","NONE"," ","CHANNEL",PRINT_CHANNEL[4]" ⇄ "PRINT_CHANNELPARTS[1])
-										}
-
-									}
-
-								}
-
+					# ── Active Connections — grouped by service ──────────────────────────────
+					if (SUM_ACTIVE_CONNS > 0) {
+						# First pass: accumulate detail rows per service, preserving insertion order
+						delete CONN_ROWS; delete CONN_SVC_SEEN; CONN_SVC_COUNT=0
+						delete CONN_SVC_ORDER
+						for (ci=1; ci<=CHILD_COUNTER; ci++) {
+							split(CHILDREN_REPORT[ci],PCH,",")
+							if (PCH[3] == "" || PCH[3] == "CLOSED" || PCH[3] == "TERMINATED") continue
+							svc = "&mdash;"
+							for (cx=1; cx<=CONNECTION_COUNTER; cx++) {
+								split(CONNECTION_REPORT[cx],PCONN,",")
+								if (PCONN[1] == PCH[1]) { svc = PCONN[2]; break }
 							}
-
+							sb = "&mdash;"; rb = "&mdash;"
+							if (match(PCH[6], /sent\[([0-9]+)\]/, sm)) sb = FMT_BYTES(sm[1]+0)
+							if (match(PCH[6], /recv\[([0-9]+)\]/, rm)) rb = FMT_BYTES(rm[1]+0)
+							if (!(svc in CONN_SVC_SEEN)) {
+								CONN_SVC_SEEN[svc] = 1
+								CONN_SVC_ORDER[++CONN_SVC_COUNT] = svc
+							}
+							# For DIAL connections the local identity is the caller; fill it in.
+							caller_disp = (PCH[4] != "") ? PCH[4] : ZITI_IDENTITYNAME
+							# Show state badge for non-connected states (CloseWrite etc.)
+							state_tag = ""
+							if (PCH[3] != "CONNECTED" && PCH[3] != "ACCEPTING")
+								state_tag = sprintf("&nbsp;<span class=\"badge badge-connecting\">%s</span>", PCH[3])
+							CONN_ROWS[svc] = CONN_ROWS[svc] sprintf("<tr class=\"zt-conn-detail\"><td class=\"zt-mono zt-muted\">%s</td><td class=\"zt-mono zt-muted\">%s%s</td><td class=\"zt-num\">%s</td><td class=\"zt-num\">%s</td></tr>", PCH[5], caller_disp, state_tag, sb, rb)
 						}
-
-						PRINTLINE("FINAL",SERVICE_EGRESSTYPE_COLORFG,SERVICE_EGRESSTYPE_COLORBG,SERVICE_EGRESSTYPE,"HOSTS",PRINT_SERVICE[5])
+						# Second pass: output grouped table
+						printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Active Connections</div>"
+						printf "<table class=\"zt-table\"><thead><tr><th>Router</th><th>Caller</th><th class=\"zt-th-sm\">Sent</th><th class=\"zt-th-sm\">Recv</th></tr></thead><tbody>"
+						for (si=1; si<=CONN_SVC_COUNT; si++) {
+							svc = CONN_SVC_ORDER[si]
+							printf "<tr class=\"zt-conn-group\"><td colspan=\"4\" class=\"zt-mono\">%s</td></tr>", svc
+							printf "%s", CONN_ROWS[svc]
+						}
+						printf "</tbody></table></div>"
 					}
 
-					if (CHANNEL_ORPHANCOUNTER > 0)
-						PRINTLINE("SINGLELBR")
-
-					for (EACH_CHANNELORPHAN in CHANNEL_ORPHANS) {
-
-						# CHANNEL ORPHANS # [1]=NUMBER,[2]=ROUTER,[3]=STATE,[4]=LATENCY
-						split(CHANNEL_ORPHANS[EACH_CHANNELORPHAN],PRINT_ORPHAN,",")
-						split(PRINT_ORPHAN[2],PRINT_ORPHANPARTS,"@")
-						PRINTLINE("INITIAL","NONE","NONE",sprintf("%04d",++EACH_CHANNELORPHANCOUNTER),"CHAN_ORPHAN",PRINT_ORPHANPARTS[1])
-						PRINTLINE("FINAL","WHITE","RED",PRINT_ORPHAN[3],"FROM",PRINT_ORPHANPARTS[2])
-
+					# ── Build current active snapshot from dump ──────────────────────────
+					# PCH[2] = child[N/UniqueID] value — unique per connection lifetime
+					for (ci=1; ci<=CHILD_COUNTER; ci++) {
+						split(CHILDREN_REPORT[ci],PCH,",")
+						if (PCH[3] == "" || PCH[3] == "CLOSED" || PCH[3] == "TERMINATED") continue
+						cid = PCH[2]
+						c_svc = ""
+						for (cx=1; cx<=CONNECTION_COUNTER; cx++) {
+							split(CONNECTION_REPORT[cx],PCONN,",")
+							if (PCONN[1] == PCH[1]) { c_svc = PCONN[2]; break }
+						}
+						if (c_svc == "") continue
+						c_sb = 0; c_rb = 0
+						if (match(PCH[6], /sent\[([0-9]+)\]/, sm)) c_sb = sm[1]+0
+						if (match(PCH[6], /recv\[([0-9]+)\]/, rm)) c_rb = rm[1]+0
+						CURR_SVC[cid]  = c_svc
+						CURR_SENT[cid] = c_sb
+						CURR_RECV[cid] = c_rb
 					}
 
-					# Final printing line.
-					PRINTLINE("SINGLELBR")
-					PRINTLINE("TAIL","GREEN","NONE",sprintf("%02d/%s/%s",ZITICONTEXT_COUNTER,PRINT_ZITICONTEXT[2],PRINT_ZITICONTEXT[1]))
+					# ── Detect ended connections: in prev snapshot but gone from dump ──────
+					# Their last recorded bytes are now final — commit to completed history.
+					for (cid in PREV_SVC) {
+						if (!(cid in CURR_SVC)) {
+							svc = PREV_SVC[cid]
+							HIST_SVC[svc]  = svc
+							HIST_SENT[svc] = HIST_SENT[svc]+0 + PREV_SENT[cid]+0
+							HIST_RECV[svc] = HIST_RECV[svc]+0 + PREV_RECV[cid]+0
+						}
+					}
+
+					# ── Persist completed history (ended connections only) ─────────────────
+					for (hkey in HIST_SVC) {
+						print HIST_SVC[hkey] "|" HIST_SENT[hkey]+0 "|" HIST_RECV[hkey]+0 > HISTFILE
+					}
+					close(HISTFILE)
+
+					# ── Persist active snapshot for next poll comparison ──────────────────
+					for (cid in CURR_SVC) {
+						print cid "|" CURR_SVC[cid] "|" CURR_SENT[cid]+0 "|" CURR_RECV[cid]+0 > ACTIVEFILE
+					}
+					close(ACTIVEFILE)
+
+					# ── Session History display: completed + live bytes per service ────────
+					delete DISP_SVC; delete DISP_SENT; delete DISP_RECV
+					for (hkey in HIST_SVC) {
+						DISP_SVC[hkey]  = HIST_SVC[hkey]
+						DISP_SENT[hkey] = HIST_SENT[hkey]+0
+						DISP_RECV[hkey] = HIST_RECV[hkey]+0
+					}
+					for (cid in CURR_SVC) {
+						svc = CURR_SVC[cid]
+						DISP_SVC[svc]  = svc
+						DISP_SENT[svc] = DISP_SENT[svc]+0 + CURR_SENT[cid]+0
+						DISP_RECV[svc] = DISP_RECV[svc]+0 + CURR_RECV[cid]+0
+					}
+
+					DISP_TOTAL = 0
+					for (hkey in DISP_SVC) DISP_TOTAL++
+					if (DISP_TOTAL > 0) {
+						printf "<div class=\"zt-section\"><div class=\"zt-section-title\">Connection History</div>"
+						printf "<table class=\"zt-table\"><thead><tr><th>Service</th><th class=\"zt-th-sm\">Sent</th><th class=\"zt-th-sm\">Recv</th></tr></thead><tbody>"
+						for (hkey in DISP_SVC) {
+							printf "<tr><td class=\"zt-mono\">%s</td><td class=\"zt-num\">%s</td><td class=\"zt-num\">%s</td></tr>",
+								DISP_SVC[hkey],
+								FMT_BYTES(DISP_SENT[hkey]+0), FMT_BYTES(DISP_RECV[hkey]+0)
+						}
+						printf "</tbody></table></div>"
+					}
+
+					printf "</div>" # end zt-identity-block
+
+
 
 				}
 
-			' "${ZETResults[${i}]}" ||
-				printf "<span class=\"FG-WHITE BG-RED\">%s</span></span><br>" "ERROR: Parsing (AWK) failed. Please report this!"
+			' "${ZETHistFile}" "${ZETActiveFile}" "${ZETResults[${i}]}" ||
+				printf "<span class=\"FG-WHITE BG-RED\">ERROR: Parsing (AWK) failed. Please report this!</span>"
 
 		done
 
@@ -655,7 +758,7 @@ function ZET_Status() {
 
 	else
 
-		printf "<span class=\"FG-WHITE BG-RED\">%s</span></span><br>" "Could not find the ZET Socket to connect to!"
+		printf "<span class=\"FG-WHITE BG-RED\">Could not find the ZET Socket to connect to!</span>"
 		return
 
 	fi
@@ -669,4 +772,4 @@ function ZET_Status() {
 # MAIN
 ####################################################################################################
 printf "<span id=\"ZETDETAIL\" class=\"FULLWIDTH\">%s</span>" "$(ZET_Status)"
-printf "<span id=\"ZETDATE-SYSTEM\" class=\"CENTERDATE FULLWIDTH OPACITY-D\">UPDATE FULLFILLED : %s</span>" "$(date -u +'%A, %d-%b-%y %H:%M:%S UTC')"
+printf "<span id=\"ZETDATE-SYSTEM\" class=\"CENTERDATE FULLWIDTH OPACITY-D\">UPDATED : %s</span>" "$(date -u +'%A, %d-%b-%y %H:%M:%S UTC')"

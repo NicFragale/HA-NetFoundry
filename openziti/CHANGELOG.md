@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.1
+- Many bugfixes.
+- New Client UI for visualization.
+- New, more flexible, Ziti DNS range selection.
+
 ## 1.7.0
 - Updates to OpenZiti (TSDK v1.15.1, CSDK v1.15.0) - PINNED.
 - REMOVES SUPPORT for armhf, armv7, i386.
